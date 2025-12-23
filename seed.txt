@@ -1,0 +1,42 @@
+﻿This technical specification outlines the Syn-Fractal Horn Orchestration System (SFH-OS). This is a multi-agent framework designed to autonomously bridge the gap between fractal mathematics, acoustic physics, and advanced additive metalforming.
+Technical Specification: Project Syn-Fractal Horn
+Autonomous Agentic Design & Manufacturing Framework (v1.0)
+1. System Overview
+The SFH-OS is a hierarchical agentic system. At its core, an Orchestrating Agent (The Conductor) manages the lifecycle of the project, from initial acoustic parameters to the final delivery of the 3D-printed metal horn. The system uses Model Context Protocol (MCP) to interface with external simulation software and hardware controllers.
+2. The Orchestration Layer: "The Conductor"
+Role: Chief System Architect.
+Primary Objective: To maintain the "Global State" of the project and resolve conflicts between acoustic idealization and manufacturing constraints.
+ * Logic Engine: High-reasoning LLM.
+ * Skillset: Project management, cross-domain synthesis, error handling, and iterative loop control.
+ * Communication Protocol: MCP (Model Context Protocol) for tool execution and JSON-RPC for sub-agent messaging.
+3. Sub-Agent Architecture & Skills
+| Sub-Agent | Designation | Core Skills | Toolset Access (via MCP) |
+|---|---|---|---|
+| Fractal Architect | AG-GEN | Recursive topology, Space-filling curves (Hilbert/Peano), Mandelbrot-set expansion mapping. | Python (NumPy/SciPy), Rhino/Grasshopper API. |
+| Acoustic Physicist | AG-SIM | BEM (Boundary Element Method) simulation, Impedance matching, Polar response analysis. | AKABAK 3, ATH, Hornresp. |
+| Fabrication Engineer | AG-MFG | Digital Sheet Forming (DSF) logic, G-code optimization, Toolpathing for Figur G15-style movement. | Custom Slicers, Python G-code Generators. |
+| Quality/Verification | AG-QA | Automated visual inspection (via camera feed), Acoustic sweep analysis (post-print). | OpenCV, REW (Room EQ Wizard). |
+4. Communication & Model Context Protocol (MCP)
+To ensure seamless data flow, the system utilizes a State-Aware Communication Protocol.
+A. The Contact Protocol
+Sub-agents do not communicate via "chat"; they pass Manifest Files.
+ * Request Manifest: Contains the specific goal (e.g., "Optimize Throat for 1kHz-20kHz").
+ * Constraint Manifest: Contains the boundaries (e.g., "Max build volume: 300mm³").
+ * Result Manifest: Contains the output (e.g., .STL file or .BEM simulation results).
+B. Model Context Protocol (MCP) Implementation
+The Orchestrator uses MCP to provide agents with "Ground Truth" data:
+ * Shared Context: The Orchestrator maintains a shared vector database containing the history of all iterations.
+ * Tool Binding: Each sub-agent is bound to specific local tools. For example, AG-SIM is the only agent with "write" permissions for the AKABAK script folder.
+5. Design & Manufacturing Pipeline
+ * Phase 1: Generative Synthesis: AG-GEN creates three fractal variations based on the Orchestrator’s target specifications.
+ * Phase 2: Acoustic Validation: AG-SIM takes these geometries and runs them through ATH and AKABAK. It returns an "Acoustic Score" based on the smoothness of the impedance curve Z_a.
+ * Phase 3: Figur-G15 Pathing: AG-MFG analyzes the winning geometry. Using algorithms derived from metalforming, it optimizes the "Skin" of the horn, ensuring that the fractal edges are printable without supports (using DSF toolpathing logic).
+ * Phase 4: Physical Execution: The Orchestrator sends the final instructions to the 3D Printer.
+ * Phase 5: Verification: After printing, AG-QA initiates a sine-sweep test and compares the physical result to the original simulation.
+6. The 2026 Deliverable
+The final output of this agentic system is a "Production Package" delivered to the user, consisting of:
+ * The Physical Horn: 3D-printed in high-density metal.
+ * The Digital Twin: A high-fidelity AKABAK model of the as-built horn.
+ * Assembly Manual: Automated instructions for mounting drivers and dampening.
+ * Verification Report: A side-by-side comparison of the AI’s predicted performance vs. real-world acoustic measurements.
+> Technical Note on Impedance: The system aims to minimize the reflection coefficient \Gamma at the throat by utilizing the recursive fractal expansion to "trap" back-pressure, similar to how fractal antennas manage electromagnetic return loss.
