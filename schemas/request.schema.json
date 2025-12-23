@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sfh-os.dev/schemas/request.json",
+  "title": "SFH-OS Request Manifest",
+  "description": "Specifies goals for sub-agent execution in the SFH-OS pipeline",
+  "type": "object",
+  "required": ["id", "request_type", "target_agent", "goal"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for this request"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when request was created"
+    },
+    "request_type": {
+      "type": "string",
+      "enum": [
+        "generate_geometry",
+        "optimize_throat",
+        "run_simulation",
+        "analyze_impedance",
+        "generate_toolpath",
+        "optimize_skin",
+        "execute_print",
+        "run_verification",
+        "compare_results",
+        "render_visualization"
+      ],
+      "description": "Type of operation requested"
+    },
+    "target_agent": {
+      "type": "string",
+      "enum": ["AG-GEN", "AG-SIM", "AG-MFG", "AG-QA", "AG-VIZ", "CONDUCTOR"],
+      "description": "Agent designated to handle this request"
+    },
+    "source_agent": {
+      "type": "string",
+      "default": "CONDUCTOR",
+      "description": "Agent that originated this request"
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 500,
+      "description": "Human-readable goal description"
+    },
+    "specs": {
+      "$ref": "#/$defs/target_specs"
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Additional parameters specific to request type"
+    },
+    "priority": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "default": 3,
+      "description": "Priority level (1=lowest, 5=highest)"
+    },
+    "iteration": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1,
+      "description": "Current iteration number"
+    },
+    "parent_request_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "ID of parent request if this is a sub-request"
+    }
+  },
+  "$defs": {
+    "frequency_range": {
+      "type": "object",
+      "required": ["min_hz", "max_hz"],
+      "properties": {
+        "min_hz": {
+          "type": "number",
+          "minimum": 20,
+          "maximum": 20000
+        },
+        "max_hz": {
+          "type": "number",
+          "minimum": 20,
+          "maximum": 20000
+        }
+      }
+    },
+    "target_specs": {
+      "type": "object",
+      "properties": {
+        "frequency_range": {
+          "$ref": "#/$defs/frequency_range"
+        },
+        "target_sensitivity_db": {
+          "type": "number",
+          "minimum": 80,
+          "maximum": 130,
+          "default": 105
+        },
+        "coverage_angle_h": {
+          "type": "number",
+          "minimum": 10,
+          "maximum": 180,
+          "default": 90,
+          "description": "Horizontal coverage angle in degrees"
+        },
+        "coverage_angle_v": {
+          "type": "number",
+          "minimum": 10,
+          "maximum": 180,
+          "default": 40,
+          "description": "Vertical coverage angle in degrees"
+        },
+        "max_distortion_thd": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 10,
+          "default": 1,
+          "description": "Maximum total harmonic distortion percentage"
+        }
+      }
+    }
+  }
+}

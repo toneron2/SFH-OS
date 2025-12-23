@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sfh-os.dev/schemas/result.json",
+  "title": "SFH-OS Result Manifest",
+  "description": "Contains output from sub-agent operations",
+  "type": "object",
+  "required": ["id", "request_id", "source_agent", "status"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "request_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Associated request manifest ID"
+    },
+    "source_agent": {
+      "type": "string",
+      "enum": ["AG-GEN", "AG-SIM", "AG-MFG", "AG-QA", "AG-VIZ", "CONDUCTOR"]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "in_progress", "success", "partial", "failed"]
+    },
+    "message": {
+      "type": "string",
+      "description": "Human-readable summary of the result"
+    },
+    "iteration": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "artifacts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "acoustic_score": {
+      "$ref": "#/$defs/acoustic_score"
+    },
+    "geometry_metrics": {
+      "$ref": "#/$defs/geometry_metrics"
+    },
+    "errors": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "execution_time_seconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Raw output data from the agent"
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "type": {
+          "type": "string",
+          "enum": ["stl", "step", "gcode", "bem_result", "simulation_data", "image", "video", "report", "measurement", "json"]
+        },
+        "path": { "type": "string" },
+        "checksum": { "type": "string" },
+        "size_bytes": { "type": "integer" },
+        "metadata": { "type": "object", "additionalProperties": true }
+      }
+    },
+    "acoustic_score": {
+      "type": "object",
+      "properties": {
+        "impedance_smoothness": { "type": "number", "minimum": 0, "maximum": 1 },
+        "frequency_response_flatness": { "type": "number", "minimum": 0, "maximum": 1 },
+        "polar_uniformity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "distortion_score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "overall": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "description": "Normalized scores from 0 (worst) to 1 (best)"
+    },
+    "geometry_metrics": {
+      "type": "object",
+      "properties": {
+        "volume_mm3": { "type": "number", "minimum": 0 },
+        "surface_area_mm2": { "type": "number", "minimum": 0 },
+        "fractal_dimension": { "type": "number", "minimum": 1, "maximum": 3 },
+        "expansion_ratio": { "type": "number", "minimum": 1 },
+        "path_length_mm": { "type": "number", "minimum": 0 },
+        "vertex_count": { "type": "integer", "minimum": 0 },
+        "face_count": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

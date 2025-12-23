@@ -2,112 +2,83 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Development Commands
-
-```bash
-# Install dependencies
-pip install -e .
-
-# Install with dev dependencies
-pip install -e ".[dev]"
-
-# Run a horn design project
-sfh run --freq-min 1000 --freq-max 20000 --sensitivity 105
-
-# Show system info
-sfh info
-
-# Check project status
-sfh status <project-id>
-
-# Run tests
-pytest
-
-# Lint code
-ruff check sfh_os/
-```
-
-**Environment Variables:**
-- `ANTHROPIC_API_KEY` - Required for Claude API access
-- `SFH_MODEL` - Override default model (default: claude-sonnet-4-20250514)
-- `SFH_DB_PATH` - Custom database path
-- `SFH_ARTIFACTS_PATH` - Custom artifacts directory
-
 ## Project Overview
 
-SFH-OS (Syn-Fractal Horn Orchestration System) is a multi-agent framework that autonomously bridges fractal mathematics, acoustic physics, and additive metalforming to design and manufacture 3D-printed metal acoustic horns.
+SFH-OS is a **Claude Code-native** autonomous framework for designing fractal acoustic horns. It uses Skills (not Python classes) as agents and MCP servers (not stub functions) as tools.
 
-## Architecture
+## Architecture Principles
 
-### Orchestration Layer ("The Conductor")
-- Central agent managing project lifecycle from acoustic parameters to final 3D-printed horn
-- Maintains "Global State" and resolves conflicts between acoustic ideals and manufacturing constraints
-- Uses MCP (Model Context Protocol) for tool execution and JSON-RPC for sub-agent messaging
+1. **Skills ARE the agents** — Each sub-agent is a `.claude/skills/*/SKILL.md` file
+2. **MCP servers ARE the tools** — Real TypeScript servers in `mcp-servers/`
+3. **Claude Code IS the runtime** — No custom Python orchestrator needed
+4. **JSON schemas for validation** — `schemas/*.schema.json` for manifests
 
-### Sub-Agents
-| Agent | Designation | Domain |
-|-------|-------------|--------|
-| Fractal Architect | AG-GEN | Recursive topology, space-filling curves (Hilbert/Peano), Mandelbrot expansion |
-| Acoustic Physicist | AG-SIM | BEM simulation, impedance matching, polar response analysis |
-| Fabrication Engineer | AG-MFG | Digital Sheet Forming logic, G-code optimization, Figur G15-style toolpathing |
-| Quality/Verification | AG-QA | Visual inspection, acoustic sweep analysis |
+## Skills (Agents)
 
-### Communication Protocol
-Sub-agents communicate via Manifest Files (not chat):
-- **Request Manifest**: Specific goal (e.g., "Optimize Throat for 1kHz-20kHz")
-- **Constraint Manifest**: Boundaries (e.g., "Max build volume: 300mm³")
-- **Result Manifest**: Output (.STL files, .BEM simulation results)
+| Skill | Purpose | Key Tools |
+|-------|---------|-----------|
+| `sfh-conductor` | Orchestrate pipeline, manage state, resolve conflicts | All skills |
+| `sfh-gen` | Generate fractal geometries (Hilbert, Peano, Mandelbrot) | `mcp__geometry__*` |
+| `sfh-sim` | Run acoustic simulations, score geometries | `mcp__acoustics__*` |
+| `sfh-mfg` | Prepare for manufacturing (DSF toolpaths, G-code) | `mcp__fabrication__*` |
+| `sfh-qa` | Verify manufactured horns against predictions | `mcp__measurement__*` |
+| `sfh-viz` | Generate visualizations at every phase | `mcp__visualization__*` |
 
-The Orchestrator maintains a shared vector database containing iteration history.
+## Key Files
 
-## Design Pipeline Phases
-1. **Generative Synthesis** (AG-GEN): Create fractal variations from target specs
-2. **Acoustic Validation** (AG-SIM): Run geometries through ATH/AKABAK, return Acoustic Score based on impedance curve smoothness
-3. **Figur-G15 Pathing** (AG-MFG): Optimize horn "skin" for support-free DSF printing
-4. **Physical Execution**: Send instructions to 3D printer
-5. **Verification** (AG-QA): Sine-sweep test comparing physical results to simulation
+- `.claude/skills/*/SKILL.md` — Agent definitions with domain expertise
+- `.claude/settings.json` — MCP server configuration
+- `schemas/*.schema.json` — Manifest validation schemas
+- `mcp-servers/*/src/index.ts` — MCP tool implementations
 
-## External Tool Integrations (via MCP)
-- **AG-GEN**: Python (NumPy/SciPy), Rhino/Grasshopper API
-- **AG-SIM**: AKABAK 3, ATH, Hornresp
-- **AG-MFG**: Custom slicers, Python G-code generators
-- **AG-QA**: OpenCV, REW (Room EQ Wizard)
+## Working with This Project
 
-## Key Technical Concepts
-- Fractal expansion minimizes reflection coefficient Γ at throat by "trapping" back-pressure (analogous to fractal antenna EM return loss management)
-- Each sub-agent has specific tool permissions (e.g., only AG-SIM can write to AKABAK script folder)
-
-## Code Structure
-
+**To invoke the full pipeline:**
 ```
-sfh_os/
-├── main.py              # CLI entry point
-├── config.py            # Configuration management
-├── conductor/           # Orchestration layer
-│   ├── orchestrator.py  # The Conductor - main loop
-│   └── state.py         # Global state management
-├── agents/              # Sub-agent implementations
-│   ├── base.py          # Abstract BaseAgent with Claude integration
-│   ├── ag_gen.py        # Fractal Architect
-│   ├── ag_sim.py        # Acoustic Physicist
-│   ├── ag_mfg.py        # Fabrication Engineer
-│   └── ag_qa.py         # Quality/Verification
-├── manifests/           # Communication protocol
-│   ├── request.py       # RequestManifest (goals)
-│   ├── constraint.py    # ConstraintManifest (boundaries)
-│   └── result.py        # ResultManifest (outputs)
-├── mcp/                 # Model Context Protocol
-│   ├── protocol.py      # Tool registration/execution
-│   └── tools/           # Domain-specific tools (stubs)
-├── pipeline/            # Pipeline phase implementations
-│   └── phase[1-5]_*.py  # Individual phase logic
-└── storage/             # Persistence layer
-    └── history.py       # SQLite iteration history
+Design a fractal horn for [frequency range] with [coverage] degrees horizontal coverage
 ```
 
-## Adding New Tools
+**To invoke individual skills:**
+```
+/sfh-gen Generate 3 Mandelbrot variations
+/sfh-sim Analyze this geometry's acoustic performance
+/sfh-viz Create a comparison dashboard
+```
 
-1. Create tool functions in `sfh_os/mcp/tools/<domain>.py`
-2. Define `Tool` objects with parameters and handlers
-3. Set `allowed_agents` to restrict access
-4. Register tools in the agent's `_register_tools()` method
+## Development
+
+**Building MCP servers:**
+```bash
+cd mcp-servers/<server> && npm install && npm run build
+```
+
+**Adding new tools:**
+1. Add tool definition in `mcp-servers/<server>/src/index.ts`
+2. Register in server's tool list
+3. Add to appropriate skill's `allowed-tools` in SKILL.md
+
+**Adding new skills:**
+1. Create `.claude/skills/<skill-name>/SKILL.md`
+2. Include YAML frontmatter with `name`, `description`, `allowed-tools`
+3. Write domain expertise as natural language instructions
+
+## Manifest Schemas
+
+All agent communication uses JSON validated against:
+- `schemas/request.schema.json` — Goals and specifications
+- `schemas/constraint.schema.json` — Boundaries and limits
+- `schemas/result.schema.json` — Outputs with scores and artifacts
+
+## State Management
+
+State is stored in `artifacts/state.json` (not SQLite). The Conductor reads/writes this file directly. Format:
+
+```json
+{
+  "project_id": "uuid",
+  "phase": "synthesis|validation|fabrication|execution|verification",
+  "iteration": 1,
+  "best_score": 0.92,
+  "history": [...]
+}
+```

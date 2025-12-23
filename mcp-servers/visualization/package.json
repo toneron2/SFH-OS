@@ -1,0 +1,25 @@
+{
+  "name": "@sfh-os/mcp-visualization",
+  "version": "0.1.0",
+  "description": "MCP server for rendering and visualization",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "three": "^0.170.0",
+    "sharp": "^0.33.0",
+    "d3": "^7.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/three": "^0.170.0",
+    "@types/d3": "^7.4.0",
+    "typescript": "^5.7.0",
+    "tsx": "^4.0.0"
+  }
+}

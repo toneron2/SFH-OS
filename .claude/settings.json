@@ -1,0 +1,30 @@
+{
+  "$schema": "https://claude.ai/schemas/settings.json",
+  "mcpServers": {
+    "sfh-geometry": {
+      "command": "node",
+      "args": ["mcp-servers/geometry/dist/index.js"],
+      "description": "Fractal geometry generation for AG-GEN"
+    },
+    "sfh-acoustics": {
+      "command": "node",
+      "args": ["mcp-servers/acoustics/dist/index.js"],
+      "description": "Acoustic simulation for AG-SIM"
+    },
+    "sfh-fabrication": {
+      "command": "node",
+      "args": ["mcp-servers/fabrication/dist/index.js"],
+      "description": "Manufacturing preparation for AG-MFG"
+    },
+    "sfh-measurement": {
+      "command": "node",
+      "args": ["mcp-servers/measurement/dist/index.js"],
+      "description": "Verification and QA for AG-QA"
+    },
+    "sfh-visualization": {
+      "command": "node",
+      "args": ["mcp-servers/visualization/dist/index.js"],
+      "description": "Rendering and visualization for AG-VIZ"
+    }
+  }
+}

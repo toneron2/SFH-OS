@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sfh-os.dev/schemas/constraint.json",
+  "title": "SFH-OS Constraint Manifest",
+  "description": "Defines boundaries within which sub-agents must operate",
+  "type": "object",
+  "required": ["id", "request_id"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "request_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Associated request manifest ID"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "strict": {
+      "type": "boolean",
+      "default": true,
+      "description": "If true, constraints are hard limits; if false, advisory"
+    },
+    "dimensional": {
+      "$ref": "#/$defs/dimensional_constraints"
+    },
+    "material": {
+      "$ref": "#/$defs/material_constraints"
+    },
+    "manufacturing": {
+      "$ref": "#/$defs/manufacturing_constraints"
+    },
+    "acoustic": {
+      "$ref": "#/$defs/acoustic_constraints"
+    },
+    "custom": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Custom constraints not covered by standard categories"
+    }
+  },
+  "$defs": {
+    "dimensional_constraints": {
+      "type": "object",
+      "properties": {
+        "max_width_mm": { "type": "number", "minimum": 10, "default": 300 },
+        "max_height_mm": { "type": "number", "minimum": 10, "default": 300 },
+        "max_depth_mm": { "type": "number", "minimum": 10, "default": 400 },
+        "min_wall_thickness_mm": { "type": "number", "minimum": 0.5, "default": 1.5 },
+        "max_wall_thickness_mm": { "type": "number", "minimum": 1, "default": 5 },
+        "throat_diameter_mm": { "type": "number", "minimum": 10, "default": 25.4 },
+        "mouth_diameter_mm": { "type": "number", "minimum": 50 }
+      }
+    },
+    "material_constraints": {
+      "type": "object",
+      "properties": {
+        "material_type": {
+          "type": "string",
+          "enum": ["aluminum", "steel", "titanium", "copper"],
+          "default": "aluminum"
+        },
+        "alloy": { "type": "string", "default": "6061-T6" },
+        "density_kg_m3": { "type": "number", "default": 2700 },
+        "yield_strength_mpa": { "type": "number", "default": 276 },
+        "max_operating_temp_c": { "type": "number", "default": 150 }
+      }
+    },
+    "manufacturing_constraints": {
+      "type": "object",
+      "properties": {
+        "process": {
+          "type": "string",
+          "enum": ["DSF", "SLM", "DMLS", "EBM"],
+          "default": "DSF",
+          "description": "Digital Sheet Forming, Selective Laser Melting, etc."
+        },
+        "max_build_volume_mm3": { "type": "number", "default": 27000000 },
+        "min_feature_size_mm": { "type": "number", "minimum": 0.1, "default": 0.5 },
+        "max_overhang_angle_deg": { "type": "number", "maximum": 90, "default": 45 },
+        "support_allowed": { "type": "boolean", "default": false },
+        "layer_height_mm": { "type": "number", "default": 0.2 }
+      }
+    },
+    "acoustic_constraints": {
+      "type": "object",
+      "properties": {
+        "min_sensitivity_db": { "type": "number", "default": 100 },
+        "max_fr_deviation_db": { "type": "number", "default": 3 },
+        "target_impedance_ohms": { "type": "number", "default": 8 },
+        "max_group_delay_ms": { "type": "number", "default": 2 },
+        "min_directivity_index_db": { "type": "number", "default": 10 }
+      }
+    }
+  }
+}
