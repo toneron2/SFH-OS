@@ -20,7 +20,7 @@ SFH-OS is a **Claude Code-native** autonomous framework for designing fractal ac
 | `sfh-conductor` | Orchestrate pipeline, manage state, resolve conflicts | All skills |
 | `sfh-gen` | Generate fractal geometries (Hilbert, Peano, Mandelbrot) | `mcp__geometry__*` |
 | `sfh-sim` | Run acoustic simulations, score geometries | `mcp__acoustics__*` |
-| `sfh-mfg` | Prepare for manufacturing (DSF toolpaths, G-code) | `mcp__fabrication__*` |
+| `sfh-mfg` | Prepare for metal AM (L-PBF orientation, supports, build files) | `mcp__fabrication__*` |
 | `sfh-qa` | Verify manufactured horns against predictions | `mcp__measurement__*` |
 | `sfh-viz` | Generate visualizations at every phase | `mcp__visualization__*` |
 

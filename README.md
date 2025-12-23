@@ -125,7 +125,7 @@ Each sub-agent is defined as a Claude Code Skill with SKILL.md:
 ├── sfh-sim/           # AG-SIM - Acoustic Physicist
 │   └── SKILL.md       # BEM simulation, scoring
 ├── sfh-mfg/           # AG-MFG - Fabrication Engineer
-│   └── SKILL.md       # DSF toolpathing, G-code
+│   └── SKILL.md       # L-PBF/SLM additive manufacturing
 ├── sfh-qa/            # AG-QA - Quality Verification
 │   └── SKILL.md       # Measurement, comparison
 └── sfh-viz/           # AG-VIZ - Visual Architect
@@ -239,25 +239,27 @@ Claude validates against these schemas natively—no Pydantic required.
 ┌─────────────────────────────────────────────────────────────────────┐
 │  PHASE 3: FABRICATION PREPARATION (sfh-mfg)                         │
 │                                                                     │
-│  • Printability analysis (overhangs, thin walls)                   │
-│  • Thickness optimization (acoustic + structural)                  │
-│  • DSF toolpath generation (spiral + layer hybrid)                 │
-│  • G-code production and validation                                │
+│  • Printability analysis (overhangs, thin walls, powder removal)   │
+│  • Build orientation optimization (minimize acoustic surface supports)│
+│  • Support structure generation (tree/block/lattice hybrid)        │
+│  • L-PBF build file generation (.3mf with scan parameters)         │
+│  • Thermal simulation for distortion prediction                    │
 │                                                                     │
-│  Constraint: NO SUPPORTS (DSF requirement)                         │
+│  Process: Laser Powder Bed Fusion (L-PBF/SLM)                      │
+│  Materials: AlSi10Mg, Ti6Al4V, 316L, Inconel 718                   │
 │                                                                     │
-│  Visualize: Printability heatmap, toolpath animation, build sim    │
+│  Visualize: Orientation comparison, support preview, thermal map   │
 └─────────────────────────────┬───────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │  PHASE 4: PHYSICAL EXECUTION                                        │
 │                                                                     │
-│  • Upload G-code to Figur G15 (or compatible DSF machine)          │
-│  • Monitor print progress                                          │
-│  • Handle errors, pauses, material changes                         │
+│  • Upload build file to L-PBF system (EOS, SLM Solutions, etc.)    │
+│  • Monitor build via melt pool and layer imaging                   │
+│  • Post-processing: stress relief, support removal, surface finish │
 │                                                                     │
-│  Output: Physical aluminum horn                                    │
+│  Output: Physical metal horn (AlSi10Mg, Ti6Al4V, etc.)             │
 └─────────────────────────────┬───────────────────────────────────────┘
                               │
                               ▼
@@ -307,9 +309,10 @@ AG-VIZ provides comprehensive visualization throughout the pipeline:
 - **Pressure Fields**: Animated acoustic pressure inside horn
 
 ### Manufacturing Visualization
-- **Printability Heatmap**: Overhang angles color-coded
-- **Toolpath Animation**: DSF tool motion preview
-- **Build Simulation**: Layer-by-layer progression
+- **Orientation Comparison**: Support volume vs. acoustic surface impact
+- **Support Preview**: 3D view of support structures in context
+- **Thermal Distortion Map**: Predicted displacement color-coded
+- **Build Simulation**: Layer-by-layer L-PBF progression
 
 ### Comparison & Reporting
 - **Variation Dashboard**: Side-by-side geometry comparison
@@ -326,6 +329,8 @@ All visualizations export to: PNG, SVG, PDF, MP4, GIF, WebGL (interactive)
 
 - **Claude Code** with MCP support
 - **Node.js** 20+ (for MCP servers)
+- **Python** 3.10+ (for geometry and simulation scripts)
+- **FreeCAD** 0.21+ (optional, for advanced geometry generation)
 - **Anthropic API key**
 
 ### Installation
@@ -336,9 +341,9 @@ git clone https://github.com/toneron2/SFH-OS.git
 cd SFH-OS
 
 # Install MCP servers
-cd mcp-servers/geometry && npm install && npm run build && cd ../..
-cd mcp-servers/acoustics && npm install && npm run build && cd ../..
-cd mcp-servers/visualization && npm install && npm run build && cd ../..
+for server in geometry acoustics fabrication visualization; do
+  cd mcp-servers/$server && npm install && npm run build && cd ../..
+done
 
 # Configure Claude Code to use SFH-OS skills
 # The .claude/ directory is auto-detected
@@ -406,27 +411,27 @@ SFH-OS/
 
 ## Roadmap
 
-### Phase 1: Foundation (Current)
+### Phase 1: Foundation
 - [x] Skill definitions for all agents
 - [x] MCP server interfaces
 - [x] JSON schemas for manifests
 - [x] Visualization skill design
 
-### Phase 2: Tool Implementation
-- [ ] Real geometry generation (Three.js + math algorithms)
-- [ ] Acoustic simulation integration (AKABAK, Hornresp)
-- [ ] G-code generation for Figur G15
+### Phase 2: Tool Implementation (Current)
+- [x] Real geometry generation (FreeCAD + Python algorithms)
+- [x] Acoustic simulation (Transfer Matrix Method, Webster equation)
+- [x] L-PBF build preparation (orientation, supports, thermal sim)
 - [ ] Measurement integration (REW, OpenCV)
 
 ### Phase 3: Hardware Integration
-- [ ] Printer control via OctoPrint/Klipper
+- [ ] L-PBF machine control integration
 - [ ] Automated measurement rig
-- [ ] Closed-loop iteration
+- [ ] Closed-loop iteration with learned constraints
 
 ### Phase 4: Advanced Features
 - [ ] Genetic algorithm optimization for fractal parameters
-- [ ] Multi-material horn construction
-- [ ] Real-time acoustic monitoring during print
+- [ ] Multi-material horn construction (binder jetting)
+- [ ] In-situ melt pool monitoring analysis
 - [ ] Web dashboard for remote monitoring
 
 ---

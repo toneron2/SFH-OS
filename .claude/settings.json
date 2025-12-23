@@ -1,5 +1,4 @@
 {
-  "$schema": "https://claude.ai/schemas/settings.json",
   "mcpServers": {
     "sfh-geometry": {
       "command": "node",
