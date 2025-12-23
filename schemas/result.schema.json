@@ -61,6 +61,9 @@
       "type": "number",
       "minimum": 0
     },
+    "cost": {
+      "$ref": "#/$defs/cost_tracking"
+    },
     "data": {
       "type": "object",
       "additionalProperties": true,
@@ -104,6 +107,16 @@
         "path_length_mm": { "type": "number", "minimum": 0 },
         "vertex_count": { "type": "integer", "minimum": 0 },
         "face_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "cost_tracking": {
+      "type": "object",
+      "description": "API cost tracking for this operation",
+      "properties": {
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 },
+        "model": { "type": "string" },
+        "estimated_usd": { "type": "number", "minimum": 0 }
       }
     }
   }

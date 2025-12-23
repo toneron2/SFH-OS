@@ -84,9 +84,45 @@ Maintain state in `artifacts/state.json`:
   "best_iteration": 0,
   "convergence_threshold": 0.95,
   "conflicts": [],
-  "history": []
+  "history": [],
+  "cost_tracking": {
+    "iteration_costs": [],
+    "phase_costs": {
+      "synthesis": 0.0,
+      "validation": 0.0,
+      "fabrication": 0.0,
+      "verification": 0.0
+    },
+    "total_usd": 0.0,
+    "budget_limit_usd": null
+  }
 }
 ```
+
+## Cost Tracking Protocol
+
+Track API costs per iteration to enable budget-aware optimization:
+
+### After Each Agent Call
+1. Extract token counts from result manifest's `cost` field
+2. Calculate cost: `(input_tokens × $15 + output_tokens × $75) / 1_000_000` for Opus
+3. Append to current iteration's running total
+
+### Per-Iteration Cost Aggregation
+```
+iteration_cost = AG-GEN + AG-SIM + AG-MFG + AG-QA + AG-VIZ + Conductor reasoning
+```
+
+### Cost-Aware Decisions
+- If `budget_limit_usd` is set, warn at 80% and halt at 100%
+- Log cost/performance ratio: `acoustic_score_improvement / iteration_cost`
+- Consider early stopping if cost/benefit ratio degrades over 3 iterations
+
+### Reporting
+Include in production package:
+- Total API cost for design
+- Cost breakdown by phase and agent
+- Iterations vs. cost efficiency curve
 
 ## Conflict Resolution Protocol
 
@@ -125,25 +161,27 @@ When verification passes, generate:
 3. **Assembly Manual** — Driver mounting, dampening application
 4. **Verification Report** — Predicted vs. measured with visualizations
 5. **Iteration History** — Full optimization journey visualization
+6. **Cost Report** — Total API spend, per-iteration breakdown, cost/performance curves
 
 ## Example Orchestration
 
 User: "Design a horn for 1kHz-20kHz, 90° horizontal coverage"
 
 ```
-1. Initialize state.json with specs
-2. Invoke sfh-gen → 3 geometry variations
-3. Invoke sfh-viz → Render all variations
-4. Invoke sfh-sim → Score each variation
-5. Invoke sfh-viz → Acoustic comparison dashboard
-6. Select best, check for conflicts
-7. Invoke sfh-mfg → Prepare for manufacturing
-8. Invoke sfh-viz → Toolpath preview
+1. Initialize state.json with specs, reset cost_tracking
+2. Invoke sfh-gen → 3 geometry variations → log cost
+3. Invoke sfh-viz → Render all variations → log cost
+4. Invoke sfh-sim → Score each variation → log cost
+5. Invoke sfh-viz → Acoustic comparison dashboard → log cost
+6. Select best, check for conflicts, aggregate iteration cost
+7. Invoke sfh-mfg → Prepare for manufacturing → log cost
+8. Invoke sfh-viz → Toolpath preview → log cost
 9. Execute print (or simulate)
-10. Invoke sfh-qa → Verify results
-11. Invoke sfh-viz → Final report with all visualizations
-12. If PASS: Generate production package
-    If FAIL: Log learnings, iterate from step 2
+10. Invoke sfh-qa → Verify results → log cost
+11. Invoke sfh-viz → Final report with all visualizations → log cost
+12. Finalize cost_tracking totals
+13. If PASS: Generate production package (includes cost report)
+    If FAIL: Check budget, log learnings, iterate from step 2
 ```
 
 ---
