@@ -1,5 +1,5 @@
 # SFH-OS: Syn-Fractal Horn Orchestration System
-!/ChatGPT Image Dec 23, 2025, 06_11_09 PM.png
+!(/ChatGPT Image Dec 23, 2025, 06_11_09 PM.png)
 > A Claude Code-native autonomous framework for designing and manufacturing fractal acoustic horns
 
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-Native-blueviolet)](https://claude.ai/code)
