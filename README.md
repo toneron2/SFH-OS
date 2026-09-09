@@ -5,6 +5,12 @@
 [![MCP](https://img.shields.io/badge/MCP-1.0-green)](https://modelcontextprotocol.io)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+![A monumental syn-fractal horn: a circular concrete-framed mouth whose throat is built from recursively subdivided cubic cells, with a person standing beside it for scale](docs/fractal-horn.jpg)
+
+*Concept render. The throat is the point: a fractal boundary gives an acoustic horn far more
+surface area and far more path lengths than a smooth one of the same footprint, which is what
+this project exists to design and then actually machine.*
+
 ---
 
 ## Table of Contents
