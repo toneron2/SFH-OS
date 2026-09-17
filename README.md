@@ -11,6 +11,12 @@
 surface area and far more path lengths than a smooth one of the same footprint, which is what
 this project exists to design and then actually machine.*
 
+**Status: Geometry, acoustic simulation and build preparation are implemented; no horn has been
+machined.** The [Roadmap](#roadmap) says which phase each item is in.
+
+A standalone project on this account: the pattern from the governance architecture, tested
+against manufacturing.
+
 ---
 
 ## Table of Contents
