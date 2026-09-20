@@ -1,460 +1,70 @@
 # SFH-OS: Syn-Fractal Horn Orchestration System
-> A Claude Code-native autonomous framework for designing and manufacturing fractal acoustic horns
 
-[![Claude Code](https://img.shields.io/badge/Claude%20Code-Native-blueviolet)](https://claude.ai/code)
-[![MCP](https://img.shields.io/badge/MCP-1.0-green)](https://modelcontextprotocol.io)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+**Design, simulate and prepare for manufacture an acoustic horn whose throat is a fractal
+surface.** A Claude Code-native pipeline: six skills as the agents, four MCP servers as the
+tools, JSON schemas as the contracts between them.
+
+| | |
+|---|---|
+| **Status** | Geometry, acoustic simulation and build preparation are implemented; no horn has been machined. |
+| **Geometry** | Hilbert and Peano space-filling curves, Mandelbrot boundary expansion; Python, 525 lines |
+| **Acoustics** | Transfer-matrix impedance, Webster horn equation, directivity, coverage angle, a scored frequency response; Python, 444 lines |
+| **Fabrication** | Laser powder-bed fusion (L-PBF): orientation, supports, thermal distortion; build files in .3mf |
+| **Not implemented** | Measurement (REW, OpenCV), machine control, closed-loop iteration |
+| **Licence** | MIT |
 
 ![A monumental syn-fractal horn: a circular concrete-framed mouth whose throat is built from recursively subdivided cubic cells, with a person standing beside it for scale](docs/fractal-horn.jpg)
 
-*Concept render. The throat is the point: a fractal boundary gives an acoustic horn far more
-surface area and far more path lengths than a smooth one of the same footprint, which is what
-this project exists to design and then actually machine.*
+*Concept render. The throat is the point: a fractal boundary gives a horn more surface area
+and more path lengths than a smooth one of the same footprint.*
 
-**Status: Geometry, acoustic simulation and build preparation are implemented; no horn has been
-machined.** The [Roadmap](#roadmap) says which phase each item is in.
+A standalone project on this account: the agent-and-tool pattern from the governance
+architecture, applied to manufacturing.
 
-A standalone project on this account: the pattern from the governance architecture, tested
-against manufacturing.
+## The hypothesis
 
----
+A horn matches the high acoustic impedance at the driver throat to the low impedance of
+open air. At any point the reflection coefficient is `Γ = (Z₂ − Z₁) / (Z₂ + Z₁)`. Classical
+profiles (exponential, tractrix) minimise each Γ by expanding gradually. The fractal
+approach distributes many small reflections across scales so that they interfere
+destructively, in the way a fractal antenna achieves wideband matching.
 
-## Table of Contents
+| Method | What it contributes |
+|---|---|
+| Space-filling curves (Hilbert, Peano) | 6–10× the geometric path length inside the same envelope; curve order sets the scale of frequency interaction |
+| Mandelbrot expansion | smooth large-scale flare from the main cardioid, fine boundary detail; the parameter `c` selects the horn's character |
+| Fractal dimension D | the design window is 1.5–1.7: below 1.3 the benefit is lost, above 2.0 the part cannot be printed and viscous losses dominate |
 
-- [Executive Summary](#executive-summary)
-- [The Innovation: Fractal Acoustics](#the-innovation-fractal-acoustics)
-- [Claude Code-Native Architecture](#claude-code-native-architecture)
-- [The 5-Phase Pipeline](#the-5-phase-pipeline)
-- [Deep Visualization](#deep-visualization)
-- [Getting Started](#getting-started)
-- [Project Structure](#project-structure)
-- [Roadmap](#roadmap)
+Whether the simulated advantage survives a printed part is the open question, and the reason
+the pipeline ends in measurement.
 
----
+## The pipeline
 
-## Executive Summary
+| Phase | Skill | MCP server | Does |
+|---|---|---|---|
+| 1 Generative synthesis | `sfh-gen` | `geometry` | several candidate geometries, each with its fractal dimension and cross-sections |
+| 2 Acoustic validation | `sfh-sim` | `acoustics` | impedance curve, polar response and an acoustic score per candidate, 500 Hz – 20 kHz; picks the winner |
+| 3 Fabrication preparation | `sfh-mfg` | `fabrication` | printability, build orientation, supports, thermal simulation, L-PBF build file. Materials: AlSi10Mg, Ti6Al4V, 316L, Inconel 718 |
+| 4 Verification | `sfh-qa` | (measurement, not built) | measured against simulated; pass, or return to phase 1 with learned constraints |
+| — Visualisation | `sfh-viz` | `visualization` | renders, impedance and waterfall plots, polar balloons, support previews |
+| — Orchestration | `sfh-conductor` | | pipeline state, conflicts between agents |
 
-SFH-OS represents a new paradigm in autonomous design systems: **the process is as innovative as the product**.
+Requests, constraints and results pass between skills as JSON validated against
+`schemas/request`, `constraint` and `result`.
 
-### The Product: Fractal Acoustic Horns
+## Getting started
 
-Traditional horn loudspeakers use expansion profiles (exponential, tractrix) from the 1920s. These are mathematical compromises. SFH-OS applies **fractal geometry** to create horns with:
-
-- **Distributed impedance matching** via self-similar expansion
-- **Wideband performance** through multi-scale resonance (like fractal antennas)
-- **Minimized reflections** by phase-canceling micro-reflections across scales
-
-The result: acoustic performance impossible with classical geometry.
-
-### The Process: Claude Code-Native Agentic System
-
-SFH-OS doesn't wrap Claude in Python—**it makes Claude Code the runtime**:
-
-| Traditional Approach | SFH-OS Approach |
-|---------------------|-----------------|
-| Python agent classes | Claude Code Skills (SKILL.md) |
-| Custom orchestrator | Conductor skill orchestrates natively |
-| Stub tool functions | Real MCP servers (TypeScript) |
-| Pydantic models | JSON Schemas validated by Claude |
-| SQLite state | File-based state Claude reads/writes |
-
-This is **2026-aware engineering**: declarative agent definitions, composable MCP tools, and Claude Code as the execution environment.
-
----
-
-## The Innovation: Fractal Acoustics
-
-### The Impedance Problem
-
-A horn matches the high acoustic impedance at the driver throat to the low impedance of open air. The reflection coefficient at any point:
-
-```
-Γ = (Z₂ - Z₁) / (Z₂ + Z₁)
-```
-
-**Traditional solution**: Gradual expansion (minimize each Γ)
-**Fractal solution**: Infinite tiny reflections that destructively interfere
-
-### Space-Filling Curves
-
-Hilbert and Peano curves fill space while maintaining continuity:
-
-```
-Hilbert Order 3:          Applied to Horn:
-    _   _                      _/\_
-   | |_| |                    /    \
-   |_   _|    ───────►       /  /\  \
-     |_|                    |  |  |  |
-                            \  \/  /
-                             \_  _/
-```
-
-Properties when applied to horn topology:
-- **Path length**: 6-10× geometric length (more expansion distance)
-- **Locality**: Adjacent curve points stay spatially close
-- **Scalability**: Order controls frequency interaction scale
-
-### Mandelbrot Expansion
-
-The Mandelbrot set boundary has infinite perimeter in finite area. Mapped to horn expansion:
-
-```python
-z_{n+1} = z_n² + c  # Iterate to find boundary distance
-r(position) = throat_r × mandelbrot_expansion(position)
-```
-
-This creates:
-- Smooth large-scale expansion (main cardioid)
-- Infinite small-scale detail (boundary fractal)
-- Different `c` values = different horn characters
-
-### The Fractal Dimension Sweet Spot
-
-For acoustic horns, optimal fractal dimension D = **1.5 to 1.7**:
-
-| D Value | Characteristic | Acoustic Effect |
-|---------|---------------|-----------------|
-| < 1.3 | Too smooth | Loses fractal benefits |
-| 1.5-1.7 | Optimal | Broadband impedance matching |
-| > 2.0 | Too complex | Unmaufacturable, viscous losses |
-
----
-
-## Claude Code-Native Architecture
-
-### Skills ARE the Agents
-
-Each sub-agent is defined as a Claude Code Skill with SKILL.md:
-
-```
-.claude/skills/
-├── sfh-conductor/     # The Conductor - orchestration intelligence
-│   └── SKILL.md       # Manages pipeline, resolves conflicts
-├── sfh-gen/           # AG-GEN - Fractal Architect
-│   ├── SKILL.md       # Geometry generation expertise
-│   └── fractal-theory.md  # Domain knowledge
-├── sfh-sim/           # AG-SIM - Acoustic Physicist
-│   └── SKILL.md       # BEM simulation, scoring
-├── sfh-mfg/           # AG-MFG - Fabrication Engineer
-│   └── SKILL.md       # L-PBF/SLM additive manufacturing
-├── sfh-qa/            # AG-QA - Quality Verification
-│   └── SKILL.md       # Measurement, comparison
-└── sfh-viz/           # AG-VIZ - Visual Architect
-    └── SKILL.md       # Rendering, dashboards
-```
-
-Skills include:
-- YAML frontmatter with `allowed-tools` for permission control
-- Rich domain expertise encoded as natural language
-- Reference documents Claude can consult
-- Invocation patterns for tool use
-
-### MCP Servers ARE the Tools
-
-Real TypeScript MCP servers provide capabilities:
-
-```
-mcp-servers/
-├── geometry/          # Fractal generation (Hilbert, Peano, Mandelbrot)
-├── acoustics/         # BEM simulation, impedance analysis
-├── fabrication/       # Toolpath generation, G-code
-├── measurement/       # Post-print verification
-└── visualization/     # Rendering, plotting, animation
-```
-
-Each server:
-- Implements Model Context Protocol
-- Exposes tools Claude can invoke
-- Is swappable (mock → real implementation)
-- Is language-agnostic (could be Python, Rust, etc.)
-
-### JSON Schemas for Manifests
-
-Communication via validated JSON:
-
-```
-schemas/
-├── request.schema.json    # Goals for sub-agents
-├── constraint.schema.json # Boundaries to respect
-└── result.schema.json     # Outputs with scores
-```
-
-Claude validates against these schemas natively—no Pydantic required.
-
-### Architecture Diagram
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        CLAUDE CODE RUNTIME                          │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│   ┌─────────────────────────────────────────────────────────────┐   │
-│   │                    sfh-conductor SKILL                       │   │
-│   │        (Orchestration, State Management, Conflicts)          │   │
-│   └─────────────────────────┬───────────────────────────────────┘   │
-│                             │                                       │
-│         ┌───────────────────┼───────────────────┐                   │
-│         ▼                   ▼                   ▼                   │
-│   ┌───────────┐       ┌───────────┐       ┌───────────┐            │
-│   │ sfh-gen   │       │ sfh-sim   │       │ sfh-mfg   │   ...      │
-│   │  SKILL    │       │  SKILL    │       │  SKILL    │            │
-│   └─────┬─────┘       └─────┬─────┘       └─────┬─────┘            │
-│         │                   │                   │                   │
-├─────────┼───────────────────┼───────────────────┼───────────────────┤
-│         ▼                   ▼                   ▼                   │
-│   ┌───────────┐       ┌───────────┐       ┌───────────┐            │
-│   │ geometry  │       │ acoustics │       │fabrication│            │
-│   │MCP Server │       │MCP Server │       │MCP Server │   ...      │
-│   └───────────┘       └───────────┘       └───────────┘            │
-│                                                                     │
-│                      MCP TOOL LAYER                                 │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## The 5-Phase Pipeline
-
-```
-     User: "Design a horn for 1kHz-20kHz, 90° coverage"
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  PHASE 1: GENERATIVE SYNTHESIS (sfh-gen)                            │
-│                                                                     │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                 │
-│  │   Hilbert   │  │    Peano    │  │  Mandelbrot │                 │
-│  │   Order 4   │  │  Iteration 3│  │  c=-0.75+0i │                 │
-│  │   D=1.52    │  │    D=1.71   │  │    D=1.63   │                 │
-│  └─────────────┘  └─────────────┘  └─────────────┘                 │
-│                                                                     │
-│  Visualize: 3D renders, fractal dimension maps, cross-sections      │
-└─────────────────────────────┬───────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  PHASE 2: ACOUSTIC VALIDATION (sfh-sim)                             │
-│                                                                     │
-│  For each variation:                                                │
-│  • Run BEM simulation (500Hz - 20kHz)                              │
-│  • Analyze impedance curve (smoothness S)                          │
-│  • Calculate polar response                                        │
-│  • Compute Acoustic Score                                          │
-│                                                                     │
-│  Select winner: Highest overall score                              │
-│                                                                     │
-│  Visualize: Impedance plots, waterfall, polar balloons, pressure   │
-└─────────────────────────────┬───────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  PHASE 3: FABRICATION PREPARATION (sfh-mfg)                         │
-│                                                                     │
-│  • Printability analysis (overhangs, thin walls, powder removal)   │
-│  • Build orientation optimization (minimize acoustic surface supports)│
-│  • Support structure generation (tree/block/lattice hybrid)        │
-│  • L-PBF build file generation (.3mf with scan parameters)         │
-│  • Thermal simulation for distortion prediction                    │
-│                                                                     │
-│  Process: Laser Powder Bed Fusion (L-PBF/SLM)                      │
-│  Materials: AlSi10Mg, Ti6Al4V, 316L, Inconel 718                   │
-│                                                                     │
-│  Visualize: Orientation comparison, support preview, thermal map   │
-└─────────────────────────────┬───────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  PHASE 4: PHYSICAL EXECUTION                                        │
-│                                                                     │
-│  • Upload build file to L-PBF system (EOS, SLM Solutions, etc.)    │
-│  • Monitor build via melt pool and layer imaging                   │
-│  • Post-processing: stress relief, support removal, surface finish │
-│                                                                     │
-│  Output: Physical metal horn (AlSi10Mg, Ti6Al4V, etc.)             │
-└─────────────────────────────┬───────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  PHASE 5: VERIFICATION (sfh-qa)                                     │
-│                                                                     │
-│  • Visual inspection (surface defects, dimensions)                 │
-│  • Acoustic sine sweep (20Hz - 20kHz)                              │
-│  • Impedance measurement                                           │
-│  • Compare measured vs. simulated                                  │
-│                                                                     │
-│  Decision: PASS → Production Package                               │
-│            FAIL → Iterate with learned constraints                 │
-│                                                                     │
-│  Visualize: Overlay plots, deviation heatmaps, comparison dash     │
-└─────────────────────────────┬───────────────────────────────────────┘
-                              │
-              ┌───────────────┴───────────────┐
-              ▼                               ▼
-        ┌─────────┐                    ┌─────────────┐
-        │  PASS   │                    │    FAIL     │
-        └────┬────┘                    └──────┬──────┘
-             │                                │
-             ▼                                ▼
-    Production Package              Return to Phase 1
-    • Physical horn                 • Updated constraints
-    • Digital twin                  • Learned parameters
-    • Assembly manual               • Conflict resolutions
-    • Verification report
-```
-
----
-
-## Deep Visualization
-
-AG-VIZ provides comprehensive visualization throughout the pipeline:
-
-### Geometry Visualization
-- **3D Renders**: Isometric, cross-section, detail views
-- **Fractal Maps**: Local dimension D color-coded on surface
-- **Animation**: Cross-section sweep revealing internal structure
-
-### Acoustic Visualization
-- **Impedance Plots**: Magnitude + phase vs. frequency
-- **Waterfall**: SPL vs. frequency vs. angle (3D surface)
-- **Polar Balloons**: 3D directivity at key frequencies
-- **Pressure Fields**: Animated acoustic pressure inside horn
-
-### Manufacturing Visualization
-- **Orientation Comparison**: Support volume vs. acoustic surface impact
-- **Support Preview**: 3D view of support structures in context
-- **Thermal Distortion Map**: Predicted displacement color-coded
-- **Build Simulation**: Layer-by-layer L-PBF progression
-
-### Comparison & Reporting
-- **Variation Dashboard**: Side-by-side geometry comparison
-- **Measured vs. Simulated**: Overlay plots with deviation bands
-- **Iteration Journey**: Score progression across optimization
-
-All visualizations export to: PNG, SVG, PDF, MP4, GIF, WebGL (interactive)
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- **Claude Code** with MCP support
-- **Node.js** 20+ (for MCP servers)
-- **Python** 3.10+ (for geometry and simulation scripts)
-- **FreeCAD** 0.21+ (optional, for advanced geometry generation)
-- **Anthropic API key**
-
-### Installation
+Requires Claude Code with MCP support, Node.js 20+, Python 3.10+; FreeCAD 0.21+ is optional.
 
 ```bash
-# Clone repository
-git clone https://github.com/toneron2/SFH-OS.git
-cd SFH-OS
-
-# Install MCP servers
-for server in geometry acoustics fabrication visualization; do
-  cd mcp-servers/$server && npm install && npm run build && cd ../..
-done
-
-# Configure Claude Code to use SFH-OS skills
-# The .claude/ directory is auto-detected
+git clone https://github.com/toneron2/SFH-OS.git && cd SFH-OS
+for s in geometry acoustics fabrication visualization; do (cd mcp-servers/$s && npm install && npm run build); done
 ```
 
-### Usage
+Open Claude Code in the directory. Example: `Design a fractal horn for 1 kHz to 20 kHz
+with 90° horizontal coverage`, or a single skill: `/sfh-gen Generate 3 Mandelbrot horn
+variations with c=-0.75`.
 
-Open Claude Code in the SFH-OS directory. The skills are automatically available:
+## Contact
 
-```
-You: Design a fractal horn for 1kHz to 20kHz with 90° horizontal coverage
-
-Claude: [Invokes sfh-conductor skill]
-        [Conductor orchestrates sfh-gen → sfh-sim → sfh-mfg → sfh-qa]
-        [Generates visualizations at each phase]
-        [Produces production package]
-```
-
-Or invoke skills directly:
-
-```
-You: /sfh-gen Generate 3 Mandelbrot horn variations with c=-0.75
-
-You: /sfh-viz Create a comparison dashboard for these geometries
-```
-
----
-
-## Project Structure
-
-```
-SFH-OS/
-├── .claude/
-│   ├── skills/
-│   │   ├── sfh-conductor/SKILL.md    # Orchestration
-│   │   ├── sfh-gen/                   # Fractal Architect
-│   │   │   ├── SKILL.md
-│   │   │   └── fractal-theory.md
-│   │   ├── sfh-sim/SKILL.md          # Acoustic Physicist
-│   │   ├── sfh-mfg/SKILL.md          # Fabrication Engineer
-│   │   ├── sfh-qa/SKILL.md           # Quality Verification
-│   │   └── sfh-viz/SKILL.md          # Visual Architect
-│   ├── settings.json                  # MCP server config
-│   └── hooks/                         # Pipeline automation
-├── mcp-servers/
-│   ├── geometry/                      # Fractal generation
-│   ├── acoustics/                     # BEM simulation
-│   ├── fabrication/                   # Toolpathing
-│   ├── measurement/                   # Verification
-│   └── visualization/                 # Rendering
-├── schemas/
-│   ├── request.schema.json
-│   ├── constraint.schema.json
-│   └── result.schema.json
-├── artifacts/                         # Generated outputs
-│   ├── geometry/
-│   ├── simulation/
-│   ├── visualization/
-│   └── production/
-├── CLAUDE.md                          # Claude Code guidance
-└── README.md
-```
-
----
-
-## Roadmap
-
-### Phase 1: Foundation
-- [x] Skill definitions for all agents
-- [x] MCP server interfaces
-- [x] JSON schemas for manifests
-- [x] Visualization skill design
-
-### Phase 2: Tool Implementation (Current)
-- [x] Real geometry generation (FreeCAD + Python algorithms)
-- [x] Acoustic simulation (Transfer Matrix Method, Webster equation)
-- [x] L-PBF build preparation (orientation, supports, thermal sim)
-- [ ] Measurement integration (REW, OpenCV)
-
-### Phase 3: Hardware Integration
-- [ ] L-PBF machine control integration
-- [ ] Automated measurement rig
-- [ ] Closed-loop iteration with learned constraints
-
-### Phase 4: Advanced Features
-- [ ] Genetic algorithm optimization for fractal parameters
-- [ ] Multi-material horn construction (binder jetting)
-- [ ] In-situ melt pool monitoring analysis
-- [ ] Web dashboard for remote monitoring
-
----
-
-## License
-
-MIT License - See [LICENSE](LICENSE) for details.
-
----
-
-<p align="center">
-  <b>Innovation Parity</b><br>
-  <i>The process is as novel as the product</i><br><br>
-  Fractal Mathematics × Acoustic Physics × Agentic AI × Metal Additive Manufacturing
-</p>
+Tony Slosar · TODOMODO.IO AGENCY LLC · anthonyslosar@gmail.com · [t.me/toneron2](https://t.me/toneron2) · [slosars.me](https://slosars.me)
