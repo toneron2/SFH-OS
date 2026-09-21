@@ -444,7 +444,3 @@ COST: $3,998 (single unit)
 BUILD FILE: artifacts/build/mandelbrot_horn.3mf
 MANUFACTURING READY: YES
 ```
-
----
-
-*The mathematics exists in the computer. The metal exists in the powder. Your job is to bridge those worlds with photons.*

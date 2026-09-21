@@ -237,7 +237,3 @@ ACOUSTIC SCORE:
 
 RECOMMENDATION: Excellent performance. Proceed to fabrication.
 ```
-
----
-
-*Sound is sculpture in time. Your simulations reveal the shape of silence.*
