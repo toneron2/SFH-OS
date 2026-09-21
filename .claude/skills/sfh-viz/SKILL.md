@@ -385,7 +385,3 @@ Total: 54 visualization assets
 Formats: PNG, SVG, PDF, MP4, GIF, HTML
 Storage: 487 MB
 ```
-
----
-
-*Data becomes information when visualized. Information becomes understanding when visualized well. Understanding becomes innovation when visualized beautifully.*

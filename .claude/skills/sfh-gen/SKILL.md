@@ -182,7 +182,3 @@ Variation 3: Mandelbrot c=-0.75+0.1i
 - Path length: 751mm
 - Best for: Balanced broadband performance
 ```
-
----
-
-*Geometry is frozen music. Fractal geometry is frozen chaos — and from chaos, perfect sound.*

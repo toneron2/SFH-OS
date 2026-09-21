@@ -291,7 +291,3 @@ critical than studio monitoring.
 CERTIFICATION: APPROVED
 Production package generated: artifacts/production/SFH-2025-001/
 ```
-
----
-
-*Simulation is prophecy. Measurement is truth. Your role is to reconcile them.*
