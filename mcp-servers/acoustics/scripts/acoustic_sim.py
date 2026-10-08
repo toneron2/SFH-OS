@@ -31,6 +31,31 @@ def load_profile(profile_path: str) -> List[Dict]:
         return json.load(f)
 
 
+def _simpson(f, a: float, b: float, n: int) -> float:
+    h = (b - a) / n
+    total = f(a) + f(b)
+    for i in range(1, n):
+        total += (4 if i % 2 else 2) * f(a + i * h)
+    return total * h / 3
+
+
+def _steps(x: float) -> int:
+    """Even step count that resolves an integrand oscillating x times across the interval."""
+    n = max(400, int(8 * x))
+    return n + (n % 2)
+
+
+def bessel_j1(x: float) -> float:
+    """J1(x) = (1/pi) * integral_0^pi cos(t - x sin t) dt."""
+    return _simpson(lambda t: math.cos(t - x * math.sin(t)), 0, math.pi, _steps(x)) / math.pi
+
+
+def struve_h1(x: float) -> float:
+    """H1(x) = (2x/pi) * integral_0^(pi/2) cos^2(t) sin(x sin t) dt."""
+    return (2 * x / math.pi) * _simpson(lambda t: math.cos(t) ** 2 * math.sin(x * math.sin(t)),
+                                        0, math.pi / 2, _steps(x))
+
+
 def compute_horn_impedance_tmm(profile: List[Dict], frequencies: List[float],
                                  throat_velocity: float = 1.0) -> Dict:
     """
@@ -84,14 +109,10 @@ def compute_horn_impedance_tmm(profile: List[Dict], frequencies: List[float],
         ka = k * mouth_radius
         z0_mouth = RHO_AIR * C_AIR / mouth_area
 
-        if ka < 2:
-            # Small ka: Z_rad ≈ (ρc/S) * (ka²/2 + j*8ka/(3π))
-            r_norm = (ka ** 2) / 2
-            x_norm = (8 * ka) / (3 * math.pi)
-        else:
-            # Large ka: approaches ρc/S
-            r_norm = 1 - math.sin(2 * ka) / (2 * ka)
-            x_norm = math.sin(ka) ** 2 / ka
+        # A piston in an infinite baffle: R = 1 - J1(2ka)/ka, X = H1(2ka)/ka. The
+        # small-ka limits are ka^2/2 and 8ka/(3*pi); both terms approach 1 and 0 at large ka.
+        r_norm = 1 - bessel_j1(2 * ka) / ka
+        x_norm = struve_h1(2 * ka) / ka
 
         z_load = complex(r_norm, x_norm) * z0_mouth
 
