@@ -71,7 +71,7 @@ const server = new McpServer({
 server.tool(
   "render_3d",
   "Render 3D visualization of horn geometry. Supports multiple views, styles, and output formats including interactive WebGL.",
-  Render3DParams,
+  Render3DParams.shape,
   async (params) => {
     const { mesh_path, style, views, resolution, annotations, output_format } = params;
 
@@ -122,7 +122,7 @@ server.tool(
 server.tool(
   "plot_2d",
   "Generate 2D plots for acoustic data visualization. Publication-quality output with proper typography and styling.",
-  Plot2DParams,
+  Plot2DParams.shape,
   async (params) => {
     const { plot_type, data_path, style, output_format } = params;
 
@@ -170,7 +170,7 @@ server.tool(
 server.tool(
   "animate",
   "Create animations for dynamic visualization of horn properties, simulation results, or manufacturing processes.",
-  AnimateParams,
+  AnimateParams.shape,
   async (params) => {
     const { animation_type, data_path, duration_seconds, fps, output_format } = params;
 
@@ -200,7 +200,7 @@ server.tool(
 server.tool(
   "dashboard",
   "Assemble interactive dashboard for comprehensive data visualization. Combines multiple plots and views.",
-  DashboardParams,
+  DashboardParams.shape,
   async (params) => {
     const { dashboard_type, data_paths, interactive } = params;
 

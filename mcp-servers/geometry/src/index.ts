@@ -133,7 +133,7 @@ server.tool(
   `Generate a Hilbert curve-based horn geometry. The Hilbert space-filling curve creates
 smooth impedance transitions optimal for broadband acoustic performance. Higher order
 values increase fractal complexity but also computation time.`,
-  HilbertParams,
+  HilbertParams.shape,
   async (params) => {
     await ensureArtifactsDir();
 
@@ -192,7 +192,7 @@ server.tool(
   `Generate a Peano curve-based horn geometry. Peano curves have higher fractal dimension
 than Hilbert curves (approaching 2.0), creating denser acoustic channeling patterns
 optimal for maximum high-frequency detail and complex internal structure.`,
-  PeanoParams,
+  PeanoParams.shape,
   async (params) => {
     await ensureArtifactsDir();
 
@@ -251,7 +251,7 @@ region of the Mandelbrot boundary to sample:
 - c = -0.75 + 0i: Main cardioid (smooth expansion)
 - c = -1.25 + 0i: Period-2 bulb (dual-rate expansion)
 - c = -0.1 + 0.75i: Spiral region (helical structure)`,
-  MandelbrotParams,
+  MandelbrotParams.shape,
   async (params) => {
     await ensureArtifactsDir();
 
@@ -310,7 +310,7 @@ server.tool(
   "analyze_fractal",
   `Analyze fractal properties of an existing horn mesh. Computes local and global fractal
 dimensions, surface complexity metrics, and predicted acoustic performance indicators.`,
-  AnalyzeParams,
+  AnalyzeParams.shape,
   async (params) => {
     const { mesh_path } = params;
 
@@ -415,7 +415,7 @@ server.tool(
   "compare_geometries",
   `Compare multiple horn geometries side by side. Useful for selecting the best candidate
 from a set of generated variations.`,
-  CompareParams,
+  CompareParams.shape,
   async (params) => {
     const { geometry_ids } = params;
 

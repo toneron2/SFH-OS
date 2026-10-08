@@ -345,7 +345,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 
 // Handle tool execution
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
+  const { name } = request.params;
+  const args: Record<string, unknown> = request.params.arguments ?? {};
 
   switch (name) {
     case "analyze_printability": {
@@ -509,7 +510,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           tools_required: ["pliers", "files", "dremel", "borescope"],
           difficulty: "MODERATE",
         },
-        output_file: args.geometry_path?.replace(".stl", "_supported.3mf"),
+        output_file: (args.geometry_path as string | undefined)?.replace(".stl", "_supported.3mf"),
       };
 
       return {
@@ -607,7 +608,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         },
         compensation: args.generate_compensation ? {
           generated: true,
-          output_file: args.geometry_path?.replace(".stl", "_compensated.stl"),
+          output_file: (args.geometry_path as string | undefined)?.replace(".stl", "_compensated.stl"),
           max_compensation_mm: 0.18,
         } : null,
         status: "ACCEPTABLE",

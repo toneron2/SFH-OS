@@ -174,7 +174,7 @@ server.tool(
   `Run complete acoustic simulation on a horn geometry. Uses Transfer Matrix Method
 for impedance calculation and piston-in-baffle model for directivity. Returns
 impedance curves, frequency response, directivity patterns, and overall acoustic score.`,
-  BEMParams,
+  BEMParams.shape,
   async (params) => {
     await ensureArtifactsDir();
 
@@ -264,7 +264,7 @@ server.tool(
   `Analyze throat acoustic impedance of a horn. Computes impedance magnitude and phase
 vs frequency, reflection coefficient, and identifies resonances. Critical for
 understanding driver loading characteristics.`,
-  ImpedanceParams,
+  ImpedanceParams.shape,
   async (params) => {
     const { profile_path } = params;
 
@@ -349,7 +349,7 @@ server.tool(
   `Calculate directivity (polar radiation pattern) at a specific frequency.
 Uses piston-in-baffle model based on mouth diameter. Returns coverage angles
 and directivity index.`,
-  PolarParams,
+  PolarParams.shape,
   async (params) => {
     const { profile_path, frequency_hz } = params;
 
@@ -442,7 +442,7 @@ and identifies the useful passband where response is within ±3dB.`,
     profile_path: z.string(),
     freq_min_hz: z.number().positive().default(200),
     freq_max_hz: z.number().positive().default(20000),
-  }),
+  }).shape,
   async (params) => {
     const { profile_path, freq_min_hz, freq_max_hz } = params;
 
@@ -541,7 +541,7 @@ server.tool(
 each and ranks by overall acoustic score.`,
   z.object({
     profile_paths: z.array(z.string()).min(2).max(5),
-  }),
+  }).shape,
   async (params) => {
     const { profile_paths } = params;
 
@@ -582,8 +582,9 @@ each and ranks by overall acoustic score.`,
     );
 
     // Rank by score
+    type Scored = Extract<(typeof results)[number], { metrics: object }>;
     const ranked = results
-      .filter((r): r is { path: string; metrics: { score: number } } => "metrics" in r)
+      .filter((r): r is Scored => r.metrics !== undefined)
       .sort((a, b) => b.metrics.score - a.metrics.score);
 
     return {
