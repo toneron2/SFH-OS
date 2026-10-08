@@ -10,13 +10,10 @@
     "dev": "tsx watch src/index.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "three": "^0.170.0",
-    "mathjs": "^13.0.0"
+    "@modelcontextprotocol/sdk": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "@types/three": "^0.170.0",
     "typescript": "^5.7.0",
     "tsx": "^4.0.0"
   }

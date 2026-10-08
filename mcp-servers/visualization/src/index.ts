@@ -13,6 +13,18 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
+// This server is an interface stub. It validates inputs and describes the
+// outputs it would produce, but writes no files: every path it returns is a
+// planned location, not an existing file. Every result carries STUB_NOTICE.
+const STUB_NOTICE = {
+  simulated: true,
+  note: "No file was written. This tool is a stub: the paths below are planned " +
+        "output locations, not files that exist.",
+} as const;
+
+const STUB_DESCRIPTION_SUFFIX =
+  " NOTE: stub implementation. Describes the planned output but writes no files.";
+
 const Render3DParams = z.object({
   mesh_path: z.string(),
   style: z.enum(["technical", "artistic", "wireframe", "xray"]).default("technical"),
@@ -70,7 +82,7 @@ const server = new McpServer({
 
 server.tool(
   "render_3d",
-  "Render 3D visualization of horn geometry. Supports multiple views, styles, and output formats including interactive WebGL.",
+  "Render 3D visualization of horn geometry. Supports multiple views, styles, and output formats including interactive WebGL." + STUB_DESCRIPTION_SUFFIX,
   Render3DParams.shape,
   async (params) => {
     const { mesh_path, style, views, resolution, annotations, output_format } = params;
@@ -99,6 +111,7 @@ server.tool(
     }
 
     const result = {
+      ...STUB_NOTICE,
       input_mesh: mesh_path,
       style,
       resolution: res,
@@ -121,7 +134,7 @@ server.tool(
 
 server.tool(
   "plot_2d",
-  "Generate 2D plots for acoustic data visualization. Publication-quality output with proper typography and styling.",
+  "Generate 2D plots for acoustic data visualization. Publication-quality output with proper typography and styling." + STUB_DESCRIPTION_SUFFIX,
   Plot2DParams.shape,
   async (params) => {
     const { plot_type, data_path, style, output_format } = params;
@@ -154,6 +167,7 @@ server.tool(
     const outputPath = data_path.replace(/\.[^.]+$/, `_${plot_type}.${output_format}`);
 
     const result = {
+      ...STUB_NOTICE,
       plot_type,
       data_source: data_path,
       output_path: outputPath,
@@ -169,7 +183,7 @@ server.tool(
 
 server.tool(
   "animate",
-  "Create animations for dynamic visualization of horn properties, simulation results, or manufacturing processes.",
+  "Create animations for dynamic visualization of horn properties, simulation results, or manufacturing processes." + STUB_DESCRIPTION_SUFFIX,
   AnimateParams.shape,
   async (params) => {
     const { animation_type, data_path, duration_seconds, fps, output_format } = params;
@@ -178,6 +192,7 @@ server.tool(
     const outputPath = data_path.replace(/\.[^.]+$/, `_${animation_type}.${output_format}`);
 
     const result = {
+      ...STUB_NOTICE,
       animation_type,
       data_source: data_path,
       output_path: outputPath,
@@ -199,7 +214,7 @@ server.tool(
 
 server.tool(
   "dashboard",
-  "Assemble interactive dashboard for comprehensive data visualization. Combines multiple plots and views.",
+  "Assemble interactive dashboard for comprehensive data visualization. Combines multiple plots and views." + STUB_DESCRIPTION_SUFFIX,
   DashboardParams.shape,
   async (params) => {
     const { dashboard_type, data_paths, interactive } = params;
@@ -245,6 +260,7 @@ server.tool(
     const layout = layouts[dashboard_type as keyof typeof layouts] || layouts.simulation_results;
 
     const result = {
+      ...STUB_NOTICE,
       dashboard_type,
       interactive,
       output_path: `artifacts/dashboards/${dashboard_type}.html`,
