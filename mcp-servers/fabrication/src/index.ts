@@ -580,7 +580,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           estimated_hours: 18.4 / (laserCount === 4 ? 3.2 : 1),
           powder_required_kg: 2.8,
         },
-        build_file_generated: true,
+        build_file_generated: false,   // an interface stub: no build file is written
       };
 
       return {

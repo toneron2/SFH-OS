@@ -143,9 +143,12 @@ mcp__sfh-acoustics__run_simulation
 
 This runs the transfer-matrix cascade in `acoustic_sim.py` (piston-in-baffle
 directivity, Webster-equation segments) and writes the full result to
-`artifacts/simulation/`. Use `impedance_analysis`, `frequency_response` and
-`polar_response` for a single quantity, and `compare_geometries` to rank
-several profiles in one call.
+`artifacts/simulation/`. To rank several profiles, run `run_simulation` on each
+and compare their scores. `impedance_analysis`, `frequency_response` and
+`compare_geometries` use a simplified model that reads only the throat diameter,
+mouth diameter and length, so different profiles with the same dimensions score
+alike: use them for a quick estimate, never to rank. `polar_response` gives the
+piston directivity of the mouth.
 
 ### Step 3: Post-Processing
 

@@ -262,8 +262,9 @@ impedance curves, frequency response, directivity patterns, and overall acoustic
 server.tool(
   "impedance_analysis",
   `Analyze throat acoustic impedance of a horn. Computes impedance magnitude and phase
-vs frequency, reflection coefficient, and identifies resonances. Critical for
-understanding driver loading characteristics.`,
+vs frequency, reflection coefficient, and identifies resonances. Simplified model:
+reads only the throat diameter, mouth diameter and length, not the profile's shape;
+use run_simulation for the transfer-matrix result.`,
   ImpedanceParams.shape,
   async (params) => {
     const { profile_path } = params;
@@ -437,7 +438,9 @@ and directivity index.`,
 server.tool(
   "frequency_response",
   `Compute on-axis frequency response (SPL vs frequency). Estimates sensitivity
-and identifies the useful passband where response is within ±3dB.`,
+and identifies the useful passband where response is within ±3dB. Simplified model:
+reads only the throat diameter, mouth diameter and length; use run_simulation for the
+transfer-matrix result.`,
   z.object({
     profile_path: z.string(),
     freq_min_hz: z.number().positive().default(200),
@@ -537,8 +540,9 @@ and identifies the useful passband where response is within ±3dB.`,
 
 server.tool(
   "compare_geometries",
-  `Compare acoustic performance of multiple horn geometries. Runs simulation on
-each and ranks by overall acoustic score.`,
+  `Compare multiple horn geometries with a simplified model that reads only the throat
+diameter, mouth diameter and length, so profiles with the same dimensions score alike.
+To rank profiles, run run_simulation on each and compare their scores.`,
   z.object({
     profile_paths: z.array(z.string()).min(2).max(5),
   }).shape,
