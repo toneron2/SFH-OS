@@ -8,11 +8,10 @@ allowed-tools:
   - Read
   - Write
   - Bash
-  - mcp__visualization__render_3d
-  - mcp__visualization__plot_2d
-  - mcp__visualization__animate
-  - mcp__visualization__dashboard
-  - mcp__visualization__export
+  - mcp__sfh-visualization__render_3d
+  - mcp__sfh-visualization__plot_2d
+  - mcp__sfh-visualization__animate
+  - mcp__sfh-visualization__dashboard
 ---
 
 # AG-VIZ: The Visual Architect

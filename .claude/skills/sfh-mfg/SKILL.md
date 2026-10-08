@@ -8,13 +8,13 @@ allowed-tools:
   - Read
   - Write
   - Bash
-  - mcp__fabrication__analyze_printability
-  - mcp__fabrication__optimize_orientation
-  - mcp__fabrication__generate_supports
-  - mcp__fabrication__prepare_build
-  - mcp__fabrication__simulate_thermal
-  - mcp__fabrication__select_material
-  - mcp__fabrication__estimate_cost
+  - mcp__sfh-fabrication__analyze_printability
+  - mcp__sfh-fabrication__optimize_orientation
+  - mcp__sfh-fabrication__generate_supports
+  - mcp__sfh-fabrication__prepare_build
+  - mcp__sfh-fabrication__simulate_thermal
+  - mcp__sfh-fabrication__select_material
+  - mcp__sfh-fabrication__estimate_cost
   - sfh-viz
 ---
 
