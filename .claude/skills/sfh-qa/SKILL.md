@@ -5,14 +5,16 @@ description: |
   inspection, acoustic measurements, comparing measured vs simulated performance,
   or generating verification reports. Determines if iteration is needed.
 allowed-tools:
+  # The sfh-measurement server is not implemented yet (see README); these
+  # names are reserved for it and will not resolve until it exists.
   - Read
   - Write
   - Bash
-  - mcp__measurement__visual_inspection
-  - mcp__measurement__sine_sweep
-  - mcp__measurement__impedance
-  - mcp__measurement__polar_scan
-  - mcp__measurement__compare_results
+  - mcp__sfh-measurement__visual_inspection
+  - mcp__sfh-measurement__sine_sweep
+  - mcp__sfh-measurement__impedance
+  - mcp__sfh-measurement__polar_scan
+  - mcp__sfh-measurement__compare_results
   - sfh-viz
 ---
 

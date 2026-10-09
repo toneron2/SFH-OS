@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-servers:
+    name: Build ${{ matrix.server }} MCP server
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        server: [geometry, acoustics, fabrication, visualization]
+    defaults:
+      run:
+        working-directory: mcp-servers/${{ matrix.server }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mcp-servers/${{ matrix.server }}/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - name: Server answers the MCP handshake and lists tools
+        run: |
+          node - <<'EOF'
+          const { spawn } = require("node:child_process");
+          const p = spawn("node", ["dist/index.js"]);
+          let buf = "";
+          const send = (o) => p.stdin.write(JSON.stringify(o) + "\n");
+          send({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "ci", version: "0" } } });
+          send({ jsonrpc: "2.0", method: "notifications/initialized" });
+          send({ jsonrpc: "2.0", id: 2, method: "tools/list", params: {} });
+          const timer = setTimeout(() => { console.error("no tools/list reply"); p.kill(); process.exit(1); }, 10000);
+          p.stdout.on("data", (d) => {
+            buf += d;
+            for (const line of buf.split("\n")) {
+              try {
+                const m = JSON.parse(line);
+                if (m.id === 2) {
+                  const names = m.result.tools.map((t) => t.name);
+                  if (names.length === 0) { console.error("no tools"); process.exit(1); }
+                  console.log("tools:", names.join(", "));
+                  clearTimeout(timer); p.kill(); process.exit(0);
+                }
+              } catch {}
+            }
+          });
+          EOF
+
+  pipeline-smoke-test:
+    name: Geometry -> acoustics smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 -m unittest discover -s tests -v

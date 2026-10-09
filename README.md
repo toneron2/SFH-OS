@@ -6,11 +6,12 @@ tools, JSON schemas as the contracts between them.
 
 | | |
 |---|---|
-| **Status** | Geometry, acoustic simulation and build preparation are implemented; no horn has been machined. |
+| **Status** | Geometry and acoustic simulation are implemented. Fabrication and visualization are interface stubs that return placeholder values. No horn has been machined. |
 | **Geometry** | Hilbert and Peano space-filling curves, Mandelbrot boundary expansion; Python, 525 lines |
 | **Acoustics** | Transfer-matrix impedance, Webster horn equation, directivity, coverage angle, a scored frequency response; Python, 444 lines |
-| **Fabrication** | Laser powder-bed fusion (L-PBF): orientation, supports, thermal distortion; build files in .3mf |
-| **Not implemented** | Measurement (REW, OpenCV), machine control, closed-loop iteration |
+| **Fabrication** | Stub. Tool contracts and a four-material L-PBF database (AlSi10Mg, Ti6Al4V, 316L, Inconel 718); the analysis numbers are placeholders and the mesh is not read |
+| **Visualization** | Stub. Tool contracts only; no renders, plots or dashboards are written |
+| **Not implemented** | Printability analysis, rendering, measurement (REW, OpenCV), machine control, closed-loop iteration |
 | **Licence** | MIT |
 
 ![A monumental syn-fractal horn: a circular concrete-framed mouth whose throat is built from recursively subdivided cubic cells, with a person standing beside it for scale](docs/fractal-horn.jpg)
@@ -44,9 +45,9 @@ the pipeline ends in measurement.
 |---|---|---|---|
 | 1 Generative synthesis | `sfh-gen` | `geometry` | several candidate geometries, each with its fractal dimension and cross-sections |
 | 2 Acoustic validation | `sfh-sim` | `acoustics` | impedance curve, polar response and an acoustic score per candidate, 500 Hz – 20 kHz; picks the winner |
-| 3 Fabrication preparation | `sfh-mfg` | `fabrication` | printability, build orientation, supports, thermal simulation, L-PBF build file. Materials: AlSi10Mg, Ti6Al4V, 316L, Inconel 718 |
+| 3 Fabrication preparation | `sfh-mfg` | `fabrication` (stub) | intended: printability, build orientation, supports, thermal simulation, L-PBF build file. Today: placeholder values flagged `simulated: true`. Materials: AlSi10Mg, Ti6Al4V, 316L, Inconel 718 |
 | 4 Verification | `sfh-qa` | (measurement, not built) | measured against simulated; pass, or return to phase 1 with learned constraints |
-| — Visualisation | `sfh-viz` | `visualization` | renders, impedance and waterfall plots, polar balloons, support previews |
+| — Visualisation | `sfh-viz` | `visualization` (stub) | intended: renders, impedance and waterfall plots, polar balloons, support previews. Today: returns planned paths, writes no files |
 | — Orchestration | `sfh-conductor` | | pipeline state, conflicts between agents |
 
 Requests, constraints and results pass between skills as JSON validated against
