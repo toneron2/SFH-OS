@@ -24,61 +24,76 @@ async function ensureArtifactsDir() {
   await fs.mkdir(ARTIFACTS_DIR, { recursive: true });
 }
 
-// Execute Python script for horn generation
-async function runHornGenerator(args: string[]): Promise<object> {
+// Interpreters to try, in order. freecadcmd gives a true BRep solid;
+// plain Python falls back to the built-in mesh writer.
+const INTERPRETERS = ["freecadcmd", "python3", "python"];
+
+// Spawn one interpreter. Resolves with the parsed JSON result, rejects with
+// { notFound: true } if the executable does not exist so the caller can try
+// the next one, or with an Error for a real failure.
+function runWith(cmd: string, scriptPath: string, args: string[]): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
-    const scriptPath = path.join(SCRIPTS_DIR, "generate_horn.py");
+    const fullArgs = cmd === "freecadcmd"
+      ? [scriptPath, "--", ...args, "--json"]
+      : [scriptPath, ...args, "--json"];
 
-    // Try freecadcmd first, fall back to python3
-    const tryCommands = ["freecadcmd", "python3", "python"];
-    let cmdIndex = 0;
+    const proc = spawn(cmd, fullArgs, {
+      cwd: SCRIPTS_DIR,
+      env: { ...process.env, PYTHONIOENCODING: "utf-8" },
+    });
 
-    function tryNextCommand() {
-      if (cmdIndex >= tryCommands.length) {
-        reject(new Error("No Python interpreter found (tried freecadcmd, python3, python)"));
+    let stdout = "";
+    let stderr = "";
+    let spawnFailed = false;
+
+    proc.stdout.on("data", (data) => { stdout += data.toString(); });
+    proc.stderr.on("data", (data) => { stderr += data.toString(); });
+
+    // ENOENT fires "error" and then "close" with a negative code; make sure
+    // only the first wins.
+    proc.on("error", (err: NodeJS.ErrnoException) => {
+      spawnFailed = true;
+      if (err.code === "ENOENT") reject({ notFound: true });
+      else reject(new Error(`Failed to start ${cmd}: ${err.message}`));
+    });
+
+    proc.on("close", (code) => {
+      if (spawnFailed) return;
+      if (code !== 0) {
+        reject(new Error(`Generator failed (${cmd} exit ${code}): ${stderr.trim()}`));
         return;
       }
-
-      const cmd = tryCommands[cmdIndex];
-      const fullArgs = cmd === "freecadcmd"
-        ? [scriptPath, "--", ...args, "--json"]
-        : [scriptPath, ...args, "--json"];
-
-      const proc = spawn(cmd, fullArgs, {
-        cwd: SCRIPTS_DIR,
-        env: { ...process.env, PYTHONIOENCODING: "utf-8" }
-      });
-
-      let stdout = "";
-      let stderr = "";
-
-      proc.stdout.on("data", (data) => { stdout += data.toString(); });
-      proc.stderr.on("data", (data) => { stderr += data.toString(); });
-
-      proc.on("error", () => {
-        cmdIndex++;
-        tryNextCommand();
-      });
-
-      proc.on("close", (code) => {
-        if (code === 0) {
-          try {
-            resolve(JSON.parse(stdout));
-          } catch {
-            reject(new Error(`Failed to parse generator output: ${stdout}`));
-          }
-        } else if (code === null) {
-          // Process didn't start, try next command
-          cmdIndex++;
-          tryNextCommand();
-        } else {
-          reject(new Error(`Generator failed (code ${code}): ${stderr}`));
-        }
-      });
-    }
-
-    tryNextCommand();
+      // freecadcmd may print a banner before the script's JSON; parse from
+      // the first "{" onward.
+      const jsonStart = stdout.indexOf("{");
+      try {
+        resolve(JSON.parse(jsonStart >= 0 ? stdout.slice(jsonStart) : stdout));
+      } catch {
+        reject(new Error(`Failed to parse generator output from ${cmd}: ${stdout.slice(0, 500)}`));
+      }
+    });
   });
+}
+
+// Execute the horn generator with the first available interpreter.
+async function runHornGenerator(args: string[]): Promise<Record<string, unknown>> {
+  const scriptPath = path.join(SCRIPTS_DIR, "generate_horn.py");
+  for (const cmd of INTERPRETERS) {
+    try {
+      return await runWith(cmd, scriptPath, args);
+    } catch (err) {
+      if (err && typeof err === "object" && "notFound" in err) continue;
+      throw err;
+    }
+  }
+  throw new Error(`No Python interpreter found (tried ${INTERPRETERS.join(", ")})`);
+}
+
+// The generator writes the expansion profile next to the mesh and reports
+// its path under output.profile_path; fall back to the conventional name.
+function profilePathFor(meshPath: string, result: Record<string, unknown>): string {
+  const output = result.output as { profile_path?: string } | undefined;
+  return output?.profile_path ?? meshPath.replace(/\.stl$/, "_profile.json");
 }
 
 // Generate unique ID for geometry
@@ -133,7 +148,7 @@ server.tool(
   `Generate a Hilbert curve-based horn geometry. The Hilbert space-filling curve creates
 smooth impedance transitions optimal for broadband acoustic performance. Higher order
 values increase fractal complexity but also computation time.`,
-  HilbertParams,
+  HilbertParams.shape,
   async (params) => {
     await ensureArtifactsDir();
 
@@ -149,7 +164,7 @@ values increase fractal complexity but also computation time.`,
         "--order", params.order.toString(),
         "--resolution", params.angular_resolution.toString(),
         "--output", outputPath,
-      ]) as Record<string, unknown>;
+      ]);
 
       // Enhance result with ID and type info
       const enhanced = {
@@ -159,17 +174,9 @@ values increase fractal complexity but also computation time.`,
         ...result,
         files: {
           mesh: outputPath,
-          profile: outputPath.replace(".stl", "_profile.json"),
+          profile: profilePathFor(outputPath, result),
         },
       };
-
-      // Write profile data
-      if (result.profile) {
-        await fs.writeFile(
-          enhanced.files.profile,
-          JSON.stringify(result.profile, null, 2)
-        );
-      }
 
       return {
         content: [{ type: "text", text: JSON.stringify(enhanced, null, 2) }],
@@ -192,7 +199,7 @@ server.tool(
   `Generate a Peano curve-based horn geometry. Peano curves have higher fractal dimension
 than Hilbert curves (approaching 2.0), creating denser acoustic channeling patterns
 optimal for maximum high-frequency detail and complex internal structure.`,
-  PeanoParams,
+  PeanoParams.shape,
   async (params) => {
     await ensureArtifactsDir();
 
@@ -208,7 +215,7 @@ optimal for maximum high-frequency detail and complex internal structure.`,
         "--iterations", params.iterations.toString(),
         "--resolution", params.angular_resolution.toString(),
         "--output", outputPath,
-      ]) as Record<string, unknown>;
+      ]);
 
       const enhanced = {
         geometry_id: id,
@@ -217,16 +224,9 @@ optimal for maximum high-frequency detail and complex internal structure.`,
         ...result,
         files: {
           mesh: outputPath,
-          profile: outputPath.replace(".stl", "_profile.json"),
+          profile: profilePathFor(outputPath, result),
         },
       };
-
-      if (result.profile) {
-        await fs.writeFile(
-          enhanced.files.profile,
-          JSON.stringify(result.profile, null, 2)
-        );
-      }
 
       return {
         content: [{ type: "text", text: JSON.stringify(enhanced, null, 2) }],
@@ -251,7 +251,7 @@ region of the Mandelbrot boundary to sample:
 - c = -0.75 + 0i: Main cardioid (smooth expansion)
 - c = -1.25 + 0i: Period-2 bulb (dual-rate expansion)
 - c = -0.1 + 0.75i: Spiral region (helical structure)`,
-  MandelbrotParams,
+  MandelbrotParams.shape,
   async (params) => {
     await ensureArtifactsDir();
 
@@ -270,7 +270,7 @@ region of the Mandelbrot boundary to sample:
         "--c-imag", params.c_imag.toString(),
         "--resolution", params.angular_resolution.toString(),
         "--output", outputPath,
-      ]) as Record<string, unknown>;
+      ]);
 
       const enhanced = {
         geometry_id: id,
@@ -280,16 +280,9 @@ region of the Mandelbrot boundary to sample:
         ...result,
         files: {
           mesh: outputPath,
-          profile: outputPath.replace(".stl", "_profile.json"),
+          profile: profilePathFor(outputPath, result),
         },
       };
-
-      if (result.profile) {
-        await fs.writeFile(
-          enhanced.files.profile,
-          JSON.stringify(result.profile, null, 2)
-        );
-      }
 
       return {
         content: [{ type: "text", text: JSON.stringify(enhanced, null, 2) }],
@@ -310,7 +303,7 @@ server.tool(
   "analyze_fractal",
   `Analyze fractal properties of an existing horn mesh. Computes local and global fractal
 dimensions, surface complexity metrics, and predicted acoustic performance indicators.`,
-  AnalyzeParams,
+  AnalyzeParams.shape,
   async (params) => {
     const { mesh_path } = params;
 
@@ -415,15 +408,15 @@ server.tool(
   "compare_geometries",
   `Compare multiple horn geometries side by side. Useful for selecting the best candidate
 from a set of generated variations.`,
-  CompareParams,
+  CompareParams.shape,
   async (params) => {
     const { geometry_ids } = params;
 
     // Read profile data for each geometry
+    const files = await fs.readdir(ARTIFACTS_DIR).catch(() => [] as string[]);
     const comparisons = await Promise.all(
       geometry_ids.map(async (id) => {
         // Find matching file in artifacts
-        const files = await fs.readdir(ARTIFACTS_DIR).catch(() => []);
         const matching = files.find((f) => f.includes(id) && f.endsWith("_profile.json"));
 
         if (!matching) {

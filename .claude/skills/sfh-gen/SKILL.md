@@ -8,11 +8,11 @@ allowed-tools:
   - Read
   - Write
   - Bash
-  - mcp__geometry__generate_hilbert
-  - mcp__geometry__generate_peano
-  - mcp__geometry__generate_mandelbrot
-  - mcp__geometry__create_mesh
-  - mcp__geometry__analyze_fractal
+  - mcp__sfh-geometry__generate_hilbert
+  - mcp__sfh-geometry__generate_peano
+  - mcp__sfh-geometry__generate_mandelbrot
+  - mcp__sfh-geometry__analyze_fractal
+  - mcp__sfh-geometry__compare_geometries
   - sfh-viz
 ---
 

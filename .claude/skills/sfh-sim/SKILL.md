@@ -1,19 +1,18 @@
 ---
 name: sfh-sim
 description: |
-  Run acoustic simulations on horn geometries using BEM analysis. Use when evaluating
+  Run acoustic simulations on horn geometries using a transfer-matrix model. Use when evaluating
   horn performance, analyzing impedance curves, calculating polar patterns, or scoring
   geometry variations. Returns acoustic metrics and visualization data.
 allowed-tools:
   - Read
   - Write
   - Bash
-  - mcp__acoustics__run_bem
-  - mcp__acoustics__impedance_analysis
-  - mcp__acoustics__polar_response
-  - mcp__acoustics__frequency_response
-  - mcp__acoustics__group_delay
-  - mcp__acoustics__pressure_field
+  - mcp__sfh-acoustics__run_simulation
+  - mcp__sfh-acoustics__impedance_analysis
+  - mcp__sfh-acoustics__polar_response
+  - mcp__sfh-acoustics__frequency_response
+  - mcp__sfh-acoustics__compare_geometries
   - sfh-viz
 ---
 
@@ -126,28 +125,27 @@ Weights:
 
 ## Simulation Protocol
 
-### Step 1: Mesh Preparation
+### Step 1: Locate the Profile
 
-```bash
-# Verify mesh quality
-mcp__acoustics__validate_mesh input.stl
+The acoustics tools operate on the expansion profile the geometry server
+writes beside each mesh (`<mesh>_profile.json`, reported by AG-GEN under
+`files.profile`). They do not read the STL directly.
+
+### Step 2: Run the Simulation
+
+```
+mcp__sfh-acoustics__run_simulation
+  profile_path: artifacts/geometry/<name>_profile.json
+  freq_min_hz: 500
+  freq_max_hz: 20000
+  freq_points: 200
 ```
 
-Requirements:
-- Watertight (no holes)
-- Maximum element size < λ_min / 6
-- Smooth normal transitions
-
-### Step 2: BEM Simulation
-
-```bash
-mcp__acoustics__run_bem \
-  --mesh horn.stl \
-  --freq-min 500 \
-  --freq-max 20000 \
-  --freq-points 200 \
-  --throat-velocity 1.0
-```
+This runs the transfer-matrix cascade in `acoustic_sim.py` (piston-in-baffle
+directivity, Webster-equation segments) and writes the full result to
+`artifacts/simulation/`. Use `impedance_analysis`, `frequency_response` and
+`polar_response` for a single quantity, and `compare_geometries` to rank
+several profiles in one call.
 
 ### Step 3: Post-Processing
 

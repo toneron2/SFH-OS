@@ -67,6 +67,7 @@ def compute_horn_impedance_tmm(profile: List[Dict], frequencies: List[float],
         'impedance_real': [],
         'impedance_imag': [],
         'impedance_magnitude': [],
+        'impedance_normalized': [],
         'impedance_phase': [],
         'reflection_coefficient': [],
     }
@@ -75,20 +76,24 @@ def compute_horn_impedance_tmm(profile: List[Dict], frequencies: List[float],
         omega = 2 * math.pi * freq
         k = omega / C_AIR  # wavenumber
 
-        # Radiation impedance at mouth (piston in infinite baffle approximation)
+        # Radiation impedance at mouth (piston in infinite baffle approximation).
+        # Everything in this function is an acoustic impedance (pressure over
+        # volume velocity, Pa·s/m³), whose characteristic value is ρc/S. The
+        # segment matrices below use the same convention, so the load and the
+        # throat normalisation must too.
         ka = k * mouth_radius
+        z0_mouth = RHO_AIR * C_AIR / mouth_area
 
-        # Low-frequency approximation for radiation impedance
         if ka < 2:
-            # Small ka: Z_rad ≈ ρc * S * (ka²/2 + j*8ka/(3π))
-            z_rad_real = RHO_AIR * C_AIR * mouth_area * (ka ** 2) / 2
-            z_rad_imag = RHO_AIR * C_AIR * mouth_area * (8 * ka) / (3 * math.pi)
+            # Small ka: Z_rad ≈ (ρc/S) * (ka²/2 + j*8ka/(3π))
+            r_norm = (ka ** 2) / 2
+            x_norm = (8 * ka) / (3 * math.pi)
         else:
-            # Large ka: approaches ρc * S
-            z_rad_real = RHO_AIR * C_AIR * mouth_area * (1 - math.sin(2*ka)/(2*ka))
-            z_rad_imag = RHO_AIR * C_AIR * mouth_area * (math.sin(ka)**2 / ka)
+            # Large ka: approaches ρc/S
+            r_norm = 1 - math.sin(2 * ka) / (2 * ka)
+            x_norm = math.sin(ka) ** 2 / ka
 
-        z_load = complex(z_rad_real, z_rad_imag)
+        z_load = complex(r_norm, x_norm) * z0_mouth
 
         # Propagate backwards through segments using transfer matrices
         z_current = z_load
@@ -113,13 +118,12 @@ def compute_horn_impedance_tmm(profile: List[Dict], frequencies: List[float],
             # Input impedance from transmission line theory
             z_current = z0 * (z_current * cosh_gl + z0 * sinh_gl) / (z0 * cosh_gl + z_current * sinh_gl)
 
-        # Throat impedance
+        # Throat impedance, normalised to the throat's characteristic
+        # acoustic impedance ρc/S so that a perfect match reads as 1 + 0j.
         z_throat = z_current
         throat_area = math.pi * (profile[0]['radius'] / 1000) ** 2
         z0_throat = RHO_AIR * C_AIR / throat_area
-
-        # Normalize to specific acoustic impedance
-        z_normalized = z_throat / (RHO_AIR * C_AIR * throat_area)
+        z_normalized = z_throat / z0_throat
 
         # Reflection coefficient
         gamma_r = (z_normalized - 1) / (z_normalized + 1)
@@ -128,6 +132,7 @@ def compute_horn_impedance_tmm(profile: List[Dict], frequencies: List[float],
         impedance_data['impedance_real'].append(z_throat.real)
         impedance_data['impedance_imag'].append(z_throat.imag)
         impedance_data['impedance_magnitude'].append(abs(z_throat))
+        impedance_data['impedance_normalized'].append(abs(z_normalized))
         impedance_data['impedance_phase'].append(math.degrees(cmath.phase(z_throat)))
         impedance_data['reflection_coefficient'].append(abs(gamma_r))
 
@@ -234,13 +239,17 @@ def compute_di(directivity: List[Dict]) -> float:
 
 
 def compute_frequency_response(profile: List[Dict], frequencies: List[float],
-                                sensitivity_ref: float = 107.0) -> Dict:
+                                sensitivity_ref: float = 107.0,
+                                impedance: Optional[Dict] = None) -> Dict:
     """
     Compute on-axis frequency response (SPL vs frequency).
 
-    Uses impedance data to estimate sensitivity variations.
+    Uses impedance data to estimate sensitivity variations. Pass a
+    precomputed `impedance` (from compute_horn_impedance_tmm on the same
+    frequencies) to avoid running the transfer-matrix cascade twice.
     """
-    impedance = compute_horn_impedance_tmm(profile, frequencies)
+    if impedance is None:
+        impedance = compute_horn_impedance_tmm(profile, frequencies)
 
     # Base sensitivity from throat size and radiation efficiency
     throat_area = math.pi * (profile[0]['radius'] / 1000) ** 2
@@ -367,7 +376,7 @@ def run_full_simulation(profile_path: str, freq_min: float = 500,
 
     # Compute all acoustic properties
     impedance = compute_horn_impedance_tmm(profile, frequencies)
-    freq_response = compute_frequency_response(profile, frequencies)
+    freq_response = compute_frequency_response(profile, frequencies, impedance=impedance)
 
     # Directivity at key frequencies
     mouth_radius = profile[-1]['radius']

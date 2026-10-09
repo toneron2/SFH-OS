@@ -79,6 +79,19 @@ const MATERIALS = {
   },
 };
 
+// This server is an interface stub. The tool contracts and the material
+// database are real; the analysis numbers are placeholders. No tool below
+// opens the geometry file yet. Every result carries STUB_NOTICE so callers
+// (and the Conductor) cannot mistake these values for measurements.
+const STUB_NOTICE = {
+  simulated: true,
+  note: "Placeholder values. This tool does not yet read the geometry file; " +
+        "the figures are illustrative, not computed from the mesh.",
+} as const;
+
+const STUB_DESCRIPTION_SUFFIX =
+  " NOTE: stub implementation. Returns placeholder values and does not read the geometry file.";
+
 // Tool definitions
 const tools: Tool[] = [
   {
@@ -340,12 +353,13 @@ const server = new Server(
 
 // Handle tool listing
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools,
+  tools: tools.map((t) => ({ ...t, description: t.description + STUB_DESCRIPTION_SUFFIX })),
 }));
 
 // Handle tool execution
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
+  const { name } = request.params;
+  const args: Record<string, unknown> = request.params.arguments ?? {};
 
   switch (name) {
     case "analyze_printability": {
@@ -354,6 +368,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       // Simulated analysis results
       const result = {
+        ...STUB_NOTICE,
         geometry: args.geometry_path,
         material: material.name,
         analysis_time_seconds: 12.4,
@@ -448,6 +463,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       ];
 
       const result = {
+        ...STUB_NOTICE,
         geometry: args.geometry_path,
         orientations_evaluated: evaluateAngles,
         acoustic_surfaces_prioritized: args.acoustic_surfaces || ["internal_cavity"],
@@ -471,6 +487,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const contactDiameter = (args.contact_diameter as number) || 0.8;
 
       const result = {
+        ...STUB_NOTICE,
         geometry: args.geometry_path,
         support_type: supportType,
         contact_diameter_mm: contactDiameter,
@@ -509,7 +526,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           tools_required: ["pliers", "files", "dremel", "borescope"],
           difficulty: "MODERATE",
         },
-        output_file: args.geometry_path?.replace(".stl", "_supported.3mf"),
+        output_file: (args.geometry_path as string | undefined)?.replace(".stl", "_supported.3mf"),
       };
 
       return {
@@ -523,6 +540,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const laserCount = (args.laser_count as number) || 4;
 
       const result = {
+        ...STUB_NOTICE,
         geometry: args.geometry_path,
         output_file: args.output_path,
         material: material.name,
@@ -575,6 +593,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const platformTemp = (args.platform_temp as number) || 200;
 
       const result = {
+        ...STUB_NOTICE,
         geometry: args.geometry_path,
         material: material.name,
         simulation_settings: {
@@ -607,7 +626,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         },
         compensation: args.generate_compensation ? {
           generated: true,
-          output_file: args.geometry_path?.replace(".stl", "_compensated.stl"),
+          output_file: (args.geometry_path as string | undefined)?.replace(".stl", "_compensated.stl"),
           max_compensation_mm: 0.18,
         } : null,
         status: "ACCEPTABLE",
@@ -671,6 +690,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       materialScores.sort((a, b) => b.score - a.score);
 
       const result = {
+        ...STUB_NOTICE,
         requirements: {
           frequency_range: freqRange,
           target_weight: args.target_weight,
@@ -754,6 +774,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         perUnitCost.quality_assurance.total;
 
       const result = {
+        ...STUB_NOTICE,
         geometry: args.geometry_path,
         material: material.name,
         quantity: quantity,
