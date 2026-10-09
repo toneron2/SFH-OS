@@ -9,7 +9,7 @@ tools, JSON schemas as the contracts between them.
 | **Status** | Geometry and acoustic simulation are implemented; fabrication and visualization are interface stubs, and no horn has been machined. |
 | **Release** | [0.2.0](https://github.com/toneron2/SFH-OS/releases/tag/v0.2.0), October 2026 |
 | **Geometry** | Expansion profiles named Hilbert (a smooth S-curve), Peano (a power-law flare) and Mandelbrot (a boundary-modulated flare), with exponential and tractrix references, meshed to STL; Python, 532 lines. The space-filling curves do not yet shape the Hilbert and Peano profiles, so their `order` and `iterations` have no effect |
-| **Acoustics** | Transfer-matrix impedance with the exact baffled-piston mouth load, Webster horn equation, directivity, coverage angle, a scored frequency response; Python, 474 lines. Only `run_simulation` runs it; the other acoustics tools use a simplified model of throat, mouth and length |
+| **Acoustics** | Transfer-matrix impedance with the exact baffled-piston mouth load, Webster horn equation, directivity, coverage angle, a scored frequency response; Python, 462 lines. Only `run_simulation` runs it; the other acoustics tools use a simplified model of throat, mouth and length |
 | **Fabrication** | Stub. Tool contracts and a four-material L-PBF database (AlSi10Mg, Ti6Al4V, 316L, Inconel 718); the analysis numbers are placeholders and the mesh is not read |
 | **Visualization** | Stub. Tool contracts only; no renders, plots or dashboards are written |
 | **Not implemented** | Printability analysis, rendering, measurement (REW, OpenCV), machine control, closed-loop iteration |
