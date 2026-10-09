@@ -18,11 +18,11 @@ SFH-OS is a **Claude Code-native** autonomous framework for designing fractal ac
 | Skill | Purpose | Key Tools |
 |-------|---------|-----------|
 | `sfh-conductor` | Orchestrate pipeline, manage state, resolve conflicts | All skills |
-| `sfh-gen` | Generate fractal geometries (Hilbert, Peano, Mandelbrot) | `mcp__geometry__*` |
-| `sfh-sim` | Run acoustic simulations, score geometries | `mcp__acoustics__*` |
-| `sfh-mfg` | Prepare for metal AM (L-PBF orientation, supports, build files) | `mcp__fabrication__*` |
-| `sfh-qa` | Verify manufactured horns against predictions | `mcp__measurement__*` |
-| `sfh-viz` | Generate visualizations at every phase | `mcp__visualization__*` |
+| `sfh-gen` | Generate fractal geometries (Hilbert, Peano, Mandelbrot) | `mcp__sfh-geometry__*` |
+| `sfh-sim` | Run acoustic simulations, score geometries | `mcp__sfh-acoustics__*` |
+| `sfh-mfg` | Prepare for metal AM (L-PBF orientation, supports, build files) | `mcp__sfh-fabrication__*` |
+| `sfh-qa` | Verify manufactured horns against predictions | `mcp__sfh-measurement__*` (server not implemented) |
+| `sfh-viz` | Generate visualizations at every phase | `mcp__sfh-visualization__*` |
 
 ## Key Files
 
@@ -55,7 +55,7 @@ cd mcp-servers/<server> && npm install && npm run build
 **Adding new tools:**
 1. Add tool definition in `mcp-servers/<server>/src/index.ts`
 2. Register in server's tool list
-3. Add to appropriate skill's `allowed-tools` in SKILL.md
+3. Add to appropriate skill's `allowed-tools` in SKILL.md as `mcp__<server name from settings.json>__<tool>`, e.g. `mcp__sfh-geometry__generate_hilbert`
 
 **Adding new skills:**
 1. Create `.claude/skills/<skill-name>/SKILL.md`

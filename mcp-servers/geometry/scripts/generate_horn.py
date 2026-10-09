@@ -450,6 +450,12 @@ def generate_horn(horn_type: str, throat_d: float, mouth_d: float, length: float
         vertices, faces = create_horn_mesh(profile, angular_resolution)
         write_stl_ascii(vertices, faces, output_path, f"sfh_{horn_type}_horn")
 
+    # Write the expansion profile beside the mesh; downstream tools
+    # (analyze_fractal, compare_geometries, the acoustics server) read it.
+    profile_path = str(Path(output_path).with_suffix('')) + '_profile.json'
+    with open(profile_path, 'w') as f:
+        json.dump(profile, f)
+
     # Build result metadata
     result = {
         'geometry_type': horn_type,
@@ -469,6 +475,7 @@ def generate_horn(horn_type: str, throat_d: float, mouth_d: float, length: float
         },
         'output': {
             'stl_path': output_path,
+            'profile_path': profile_path,
             'vertex_count': angular_resolution * 101 + 2,
             'face_count': angular_resolution * 100 * 2 + angular_resolution * 2,
         },
