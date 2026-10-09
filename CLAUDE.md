@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SFH-OS is a **Claude Code-native** autonomous framework for designing fractal acoustic horns. It uses Skills (not Python classes) as agents and MCP servers (not stub functions) as tools.
+SFH-OS is a **Claude Code-native** autonomous framework for designing fractal acoustic horns. It uses Skills (not Python classes) as agents and MCP servers as tools; the fabrication and visualization servers are interface stubs.
 
 ## Architecture Principles
 

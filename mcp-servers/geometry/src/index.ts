@@ -145,9 +145,9 @@ const server = new McpServer({
 // Register tools
 server.tool(
   "generate_hilbert",
-  `Generate a Hilbert curve-based horn geometry. The Hilbert space-filling curve creates
-smooth impedance transitions optimal for broadband acoustic performance. Higher order
-values increase fractal complexity but also computation time.`,
+  `Generate the horn profile named Hilbert: a smooth S-curve (smoothstep) expansion from
+throat to mouth. The space-filling curve itself does not yet shape the profile, so
+\`order\` is recorded but does not change the geometry.`,
   HilbertParams.shape,
   async (params) => {
     await ensureArtifactsDir();
@@ -196,9 +196,9 @@ values increase fractal complexity but also computation time.`,
 
 server.tool(
   "generate_peano",
-  `Generate a Peano curve-based horn geometry. Peano curves have higher fractal dimension
-than Hilbert curves (approaching 2.0), creating denser acoustic channeling patterns
-optimal for maximum high-frequency detail and complex internal structure.`,
+  `Generate the horn profile named Peano: a power-law flare (radius grows as t^1.3) from
+throat to mouth. The space-filling curve itself does not yet shape the profile, so
+\`iterations\` is recorded but does not change the geometry.`,
   PeanoParams.shape,
   async (params) => {
     await ensureArtifactsDir();
@@ -363,7 +363,8 @@ dimensions, surface complexity metrics, and predicted acoustic performance indic
 
     // Acoustic predictions based on fractal properties
     const inOptimalRange = globalDimension >= 1.5 && globalDimension <= 1.7;
-    const expectedSmoothness = inOptimalRange ? 0.9 + Math.random() * 0.05 : 0.75 + Math.random() * 0.1;
+    // A heuristic by dimension band, not a measurement; fixed so identical profiles score alike.
+    const expectedSmoothness = inOptimalRange ? 0.925 : 0.8;
 
     const analysis = {
       mesh_path,
@@ -372,7 +373,7 @@ dimensions, surface complexity metrics, and predicted acoustic performance indic
         dimension_variance: Number(dimensionVariance.toFixed(3)),
         min_local_dimension: Number((globalDimension - dimensionVariance * 2).toFixed(3)),
         max_local_dimension: Number((globalDimension + dimensionVariance * 2).toFixed(3)),
-        optimal_region_percentage: inOptimalRange ? 75 + Math.random() * 20 : 40 + Math.random() * 30,
+        optimal_region_percentage: inOptimalRange ? 85 : 55,   // heuristic by band, as above
         interpretation: inOptimalRange
           ? "Fractal dimension in optimal range for broadband impedance matching"
           : globalDimension < 1.5

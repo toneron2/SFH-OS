@@ -31,6 +31,31 @@ def load_profile(profile_path: str) -> List[Dict]:
         return json.load(f)
 
 
+def _simpson(f, a: float, b: float, n: int) -> float:
+    h = (b - a) / n
+    total = f(a) + f(b)
+    for i in range(1, n):
+        total += (4 if i % 2 else 2) * f(a + i * h)
+    return total * h / 3
+
+
+def _steps(x: float) -> int:
+    """Even step count that resolves an integrand oscillating x times across the interval."""
+    n = max(400, int(8 * x))
+    return n + (n % 2)
+
+
+def bessel_j1(x: float) -> float:
+    """J1(x) = (1/pi) * integral_0^pi cos(t - x sin t) dt."""
+    return _simpson(lambda t: math.cos(t - x * math.sin(t)), 0, math.pi, _steps(x)) / math.pi
+
+
+def struve_h1(x: float) -> float:
+    """H1(x) = (2x/pi) * integral_0^(pi/2) cos^2(t) sin(x sin t) dt."""
+    return (2 * x / math.pi) * _simpson(lambda t: math.cos(t) ** 2 * math.sin(x * math.sin(t)),
+                                        0, math.pi / 2, _steps(x))
+
+
 def compute_horn_impedance_tmm(profile: List[Dict], frequencies: List[float],
                                  throat_velocity: float = 1.0) -> Dict:
     """
@@ -84,14 +109,10 @@ def compute_horn_impedance_tmm(profile: List[Dict], frequencies: List[float],
         ka = k * mouth_radius
         z0_mouth = RHO_AIR * C_AIR / mouth_area
 
-        if ka < 2:
-            # Small ka: Z_rad ≈ (ρc/S) * (ka²/2 + j*8ka/(3π))
-            r_norm = (ka ** 2) / 2
-            x_norm = (8 * ka) / (3 * math.pi)
-        else:
-            # Large ka: approaches ρc/S
-            r_norm = 1 - math.sin(2 * ka) / (2 * ka)
-            x_norm = math.sin(ka) ** 2 / ka
+        # A piston in an infinite baffle: R = 1 - J1(2ka)/ka, X = H1(2ka)/ka. The
+        # small-ka limits are ka^2/2 and 8ka/(3*pi); both terms approach 1 and 0 at large ka.
+        r_norm = 1 - bessel_j1(2 * ka) / ka
+        x_norm = struve_h1(2 * ka) / ka
 
         z_load = complex(r_norm, x_norm) * z0_mouth
 
@@ -158,12 +179,11 @@ def compute_directivity(mouth_radius_mm: float, frequency_hz: float,
             # On-axis: maximum
             d = 1.0
         else:
-            # Bessel function approximation for J1
+            # Piston in a baffle: D = 2 J1(x) / x
             x = ka * math.sin(angle_rad)
             if abs(x) < 0.001:
                 d = 1.0
             else:
-                # J1(x)/x using series expansion or approximation
                 j1_over_x = bessel_j1(x) / x
                 d = 2 * j1_over_x
 
@@ -185,17 +205,6 @@ def compute_directivity(mouth_radius_mm: float, frequency_hz: float,
         'coverage_10db_deg': coverage_10db,
         'directivity_index_db': compute_di(directivity)
     }
-
-
-def bessel_j1(x: float) -> float:
-    """First-order Bessel function J1(x) approximation."""
-    if abs(x) < 3:
-        # Small argument series
-        x2 = x * x
-        return x/2 * (1 - x2/8 + x2*x2/192 - x2*x2*x2/9216)
-    else:
-        # Large argument asymptotic
-        return math.sqrt(2/(math.pi*x)) * math.cos(x - 3*math.pi/4)
 
 
 def find_coverage_angle(directivity: List[Dict], level_db: float) -> float:
