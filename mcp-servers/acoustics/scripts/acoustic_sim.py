@@ -179,12 +179,11 @@ def compute_directivity(mouth_radius_mm: float, frequency_hz: float,
             # On-axis: maximum
             d = 1.0
         else:
-            # Bessel function approximation for J1
+            # Piston in a baffle: D = 2 J1(x) / x
             x = ka * math.sin(angle_rad)
             if abs(x) < 0.001:
                 d = 1.0
             else:
-                # J1(x)/x using series expansion or approximation
                 j1_over_x = bessel_j1(x) / x
                 d = 2 * j1_over_x
 
@@ -206,17 +205,6 @@ def compute_directivity(mouth_radius_mm: float, frequency_hz: float,
         'coverage_10db_deg': coverage_10db,
         'directivity_index_db': compute_di(directivity)
     }
-
-
-def bessel_j1(x: float) -> float:
-    """First-order Bessel function J1(x) approximation."""
-    if abs(x) < 3:
-        # Small argument series
-        x2 = x * x
-        return x/2 * (1 - x2/8 + x2*x2/192 - x2*x2*x2/9216)
-    else:
-        # Large argument asymptotic
-        return math.sqrt(2/(math.pi*x)) * math.cos(x - 3*math.pi/4)
 
 
 def find_coverage_angle(directivity: List[Dict], level_db: float) -> float:
